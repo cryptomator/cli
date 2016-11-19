@@ -1,0 +1,87 @@
+/*******************************************************************************
+ * Copyright (c) 2016 Sebastian Stenzel and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the accompanying LICENSE.txt.
+ *
+ * Contributors:
+ *     Sebastian Stenzel - initial API and implementation
+ *******************************************************************************/
+package org.cryptomator.cli;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.apache.commons.cli.ParseException;
+import org.cryptomator.cryptofs.CryptoFileSystemProperties;
+import org.cryptomator.cryptofs.CryptoFileSystemProvider;
+import org.cryptomator.frontend.webdav.WebDavServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CryptomatorCli {
+
+	private static final Logger LOG = LoggerFactory.getLogger(CryptomatorCli.class);
+
+	public static void main(String[] rawArgs) throws IOException {
+		try {
+			Args args = Args.parse(rawArgs);
+			validate(args);
+			startup(args);
+		} catch (ParseException e) {
+			LOG.error("Invalid or missing arguments", e);
+			Args.printUsage();
+		} catch (IllegalArgumentException e) {
+			LOG.error(e.getMessage());
+			Args.printUsage();
+		}
+	}
+
+	private static void validate(Args args) throws IllegalArgumentException {
+		if (args.getPort() < 0 || args.getPort() > 65536) {
+			throw new IllegalArgumentException("Invalid WebDAV Port.");
+		}
+
+		if (args.getVaultNames().size() == 0) {
+			throw new IllegalArgumentException("No vault specified.");
+		}
+
+		for (String vaultName : args.getVaultNames()) {
+			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
+			if (!Files.isDirectory(vaultPath)) {
+				throw new IllegalArgumentException("Not a directory: " + vaultPath);
+			}
+		}
+	}
+
+	private static void startup(Args args) throws IOException {
+		WebDavServer server = WebDavServer.create(args.getPort());
+		server.start();
+
+		for (String vaultName : args.getVaultNames()) {
+			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
+			LOG.info("Unlocking vault \"{}\" located at {}", vaultName, vaultPath);
+			String vaultPassword = args.getVaultPassword(vaultName);
+			CryptoFileSystemProperties properties = CryptoFileSystemProperties.cryptoFileSystemProperties().withPassphrase(vaultPassword).build();
+			Path vaultRoot = CryptoFileSystemProvider.newFileSystem(vaultPath, properties).getPath("/");
+			server.startWebDavServlet(vaultRoot, vaultName);
+		}
+
+		waitForShutdown(() -> {
+			LOG.info("Shutting down...");
+			try {
+				server.stop();
+				LOG.info("Shutdown successful.");
+			} catch (Throwable e) {
+				LOG.error("Error during shutdown", e);
+			}
+		});
+	}
+
+	private static void waitForShutdown(Runnable runnable) {
+		Runtime.getRuntime().addShutdownHook(new Thread(runnable));
+		LOG.info("Server started. Press Ctrl+C to terminate.");
+	}
+
+}
