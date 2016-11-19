@@ -1,0 +1,24 @@
+language: java
+sudo: false
+jdk:
+- oraclejdk8
+install:
+- mvn dependency:go-offline
+script:
+- mvn clean install
+cache:
+  directories:
+  - "$HOME/.m2"
+deploy:
+- provider: releases
+  api_key:
+    secure: wclnmySSl1rMEWn5oe2cB1YamgmubDJxLo3vaQtpyKAVqdN6sy0VKa2/UjucxZY2mHJKQjWSjhpXSpROH2Ufp0RoC9wsBaICa+dEDcFO8dxxsczuOHsJzTr8ewfaIMzaPVxltOtyhEQcA+u5oX5l8aWFHpqYD8V86NKo5l0PF9wGTrjSksbzDq44lmU/dzjC1VaDjLTIjaGsqYQf6b3SXD8k3Loo1vlp/OFAryvOSZU9/53b7KfpAx7FckYZHLPOEPQDUIpKr5xTr2dRATaHXxT/9xqiIZz7kHOGDQYLo3lszdQdU+N8oL50RrPvkBtEFHIALv66CclTlP+Z6FoSLAgv13u+b2XpdmG/VeI1MM4tdW9fDPAQ1AQrH5nqiM4sKOLeViPtXYuKwH8TvNsTIA1Jl6QqjfmbEEGDefWUiRcc/g/O6Rxz3hjBB5lDvyKpT8nfuk0j1qYlLPjTuaGGRP5Ajjw+rGx4nTfA38Me5dldZ67bmbuBVDEKvSctTF86nntQm0Xf7vSUkd2eRZGT0Tj4SzeLVSroqFMOhlYqbNz4Zc67QwtRAjd3y5+6HqjwiVzzJM747PNFpy5jPee71z/Sdw/RtIGv0TroJmSwoIlJjbRYiYXT176xKZtzrOAUHwhDytzRqMi6DZj+ZSROOX+Rdwuc+lRRgvdFMDngMQI=
+  file_glob: true
+  file:
+  - "target/cryptomator-cli-*.jar"
+  skip_cleanup: true
+  prerelease: true
+  on:
+    repo: cryptomator/cli
+    branch: master
+    tags: true
