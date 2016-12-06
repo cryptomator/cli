@@ -15,7 +15,7 @@ Download the jar file via [GitHub Releases](https://github.com/cryptomator/cli/r
 Cryptomator CLI depends on a Java 8 JRE. In addition the JCE unlimited strength policy files (needed for 256-bit keys) must be installed.
 
 ```sh
-java -jar cryptomator-cli-x.y.z.jar --port 8080 --vault demoVault=/path/to/vault --password demoVault=topSecret
+java -jar cryptomator-cli-x.y.z.jar --bind 0.0.0.0 --port 8080 --vault demoVault=/path/to/vault --password demoVault=topSecret
 # you can now mount http://localhost:8080/demoVault/
 ```
 
