@@ -25,10 +25,17 @@ import org.apache.commons.cli.ParseException;
 public class Args {
 
 	private static final String USAGE = "java -jar cryptomator-cli.jar" //
+			+ " --bind localhost --port 8080" //
 			+ " --vault mySecretVault=/path/to/vault --password mySecretVault=FooBar3000" //
 			+ " --vault myOtherVault=/path/to/other/vault --password myOtherVault=BarFoo4000";
 	private static final Options OPTIONS = new Options();
 	static {
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("bind") //
+				.argName("WebDAV bind address") //
+				.desc("TCP socket bind address of the WebDAV server. Use 0.0.0.0 to accept all incoming connections.") //
+				.hasArg() //
+				.build());
 		OPTIONS.addOption(Option.builder() //
 				.longOpt("port") //
 				.argName("WebDAV port") //
@@ -51,14 +58,20 @@ public class Args {
 				.build());
 	}
 
+	private final String bindAddr;
 	private final int port;
 	private final Properties vaultPaths;
 	private final Properties vaultPasswords;
 
 	public Args(CommandLine commandLine) throws ParseException {
+		this.bindAddr = commandLine.getOptionValue("bind", "localhost");
 		this.port = Integer.parseInt(commandLine.getOptionValue("port", "0"));
 		this.vaultPaths = commandLine.getOptionProperties("vault");
 		this.vaultPasswords = commandLine.getOptionProperties("password");
+	}
+
+	public String getBindAddr() {
+		return bindAddr;
 	}
 
 	public int getPort() {

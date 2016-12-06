@@ -56,7 +56,7 @@ public class CryptomatorCli {
 	}
 
 	private static void startup(Args args) throws IOException {
-		WebDavServer server = WebDavServer.create(args.getPort());
+		WebDavServer server = WebDavServer.create(args.getBindAddr(), args.getPort());
 		server.start();
 
 		for (String vaultName : args.getVaultNames()) {
