@@ -56,7 +56,8 @@ public class CryptomatorCli {
 	}
 
 	private static void startup(Args args) throws IOException {
-		WebDavServer server = WebDavServer.create(args.getBindAddr(), args.getPort());
+		WebDavServer server = WebDavServer.create();
+		server.bind(args.getBindAddr(), args.getPort());
 		server.start();
 
 		for (String vaultName : args.getVaultNames()) {
@@ -65,7 +66,7 @@ public class CryptomatorCli {
 			String vaultPassword = args.getVaultPassword(vaultName);
 			CryptoFileSystemProperties properties = CryptoFileSystemProperties.cryptoFileSystemProperties().withPassphrase(vaultPassword).build();
 			Path vaultRoot = CryptoFileSystemProvider.newFileSystem(vaultPath, properties).getPath("/");
-			server.startWebDavServlet(vaultRoot, vaultName);
+			server.createWebDavServlet(vaultRoot, vaultName);
 		}
 
 		waitForShutdown(() -> {
