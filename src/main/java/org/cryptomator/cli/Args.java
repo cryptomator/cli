@@ -75,14 +75,18 @@ public class Args {
 	private final int port;
 	private final Properties vaultPaths;
 	private final Properties vaultPasswords;
-	private final Properties vaultPasswordfiles;
+	private final Properties vaultPasswordFiles;
+
+	private boolean hasPasswordOrPasswordFile(Object vaultPath) {
+		return vaultPasswords.containsKey(vaultPath) || vaultPasswordFiles.containsKey(vaultPath);
+	}
 
 	public Args(CommandLine commandLine) throws ParseException {
 		this.bindAddr = commandLine.getOptionValue("bind", "localhost");
 		this.port = Integer.parseInt(commandLine.getOptionValue("port", "0"));
 		this.vaultPaths = commandLine.getOptionProperties("vault");
 		this.vaultPasswords = commandLine.getOptionProperties("password");
-		this.vaultPasswordfiles = commandLine.getOptionProperties("passwordfile");
+		this.vaultPasswordFiles = commandLine.getOptionProperties("passwordfile");
 	}
 
 	public String getBindAddr() {
@@ -94,27 +98,23 @@ public class Args {
 	}
 
 	public Set<String> getVaultNames() {
-		Set<String> filteredVaults = vaultPaths.keySet().stream().filter(vaultPasswords::containsKey).map(String.class::cast).collect(Collectors.toSet());
-		filteredVaults.addAll(vaultPaths.keySet().stream().filter(vaultPasswordfiles::containsKey).map(String.class::cast).collect(Collectors.toSet()));
-		return filteredVaults;
+		return vaultPaths.keySet().stream().filter(this::hasPasswordOrPasswordFile).map(String.class::cast).collect(Collectors.toSet());
 	}
 
 	public String getVaultPath(String vaultName) {
 		return vaultPaths.getProperty(vaultName);
 	}
 
-	public String getVaultPasswordPath(String vaultName) {	return vaultPasswordfiles.getProperty(vaultName); }
+	public String getVaultPasswordPath(String vaultName) {
+		return vaultPasswordFiles.getProperty(vaultName);
+	}
 
 	public String getVaultPassword(String vaultName) {
 		if (vaultPasswords.getProperty(vaultName) == null){
-			Path vaultPasswordPath = Paths.get(vaultPasswordfiles.getProperty(vaultName));
+			Path vaultPasswordPath = Paths.get(vaultPasswordFiles.getProperty(vaultName));
 			if (Files.isReadable(vaultPasswordPath) && Files.isRegularFile(vaultPasswordPath)){
 				try (Stream<String> lines = Files.lines(vaultPasswordPath)) {
-					String vaultPassword = lines.findFirst().get().toString();
-					if (vaultPassword != "") {
-						return vaultPassword;
-					}
-					return null;
+					return lines.findFirst().get().toString();
 				} catch (IOException e) {
 					return null;
 				}
