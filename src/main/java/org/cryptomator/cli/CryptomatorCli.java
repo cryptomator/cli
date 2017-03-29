@@ -49,6 +49,10 @@ public class CryptomatorCli {
 
 		for (String vaultName : args.getVaultNames()) {
 			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
+			if ((args.getVaultPasswordPath(vaultName) != null) && args.getVaultPassword(vaultName) == null)
+			{
+				throw new IllegalArgumentException("Cannot read password from file: " + Paths.get(args.getVaultPasswordPath(vaultName)));
+			}
 			if (!Files.isDirectory(vaultPath)) {
 				throw new IllegalArgumentException("Not a directory: " + vaultPath);
 			}

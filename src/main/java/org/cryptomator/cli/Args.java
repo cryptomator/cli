@@ -8,9 +8,14 @@
  *******************************************************************************/
 package org.cryptomator.cli;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -27,7 +32,8 @@ public class Args {
 	private static final String USAGE = "java -jar cryptomator-cli.jar" //
 			+ " --bind localhost --port 8080" //
 			+ " --vault mySecretVault=/path/to/vault --password mySecretVault=FooBar3000" //
-			+ " --vault myOtherVault=/path/to/other/vault --password myOtherVault=BarFoo4000";
+			+ " --vault myOtherVault=/path/to/other/vault --password myOtherVault=BarFoo4000"
+	        + " --vault myThirdVault=/path/to/third/vault --passwordfile myThirdVault=/path/to/passwordfile";
 	private static final Options OPTIONS = new Options();
 	static {
 		OPTIONS.addOption(Option.builder() //
@@ -56,18 +62,27 @@ public class Args {
 				.valueSeparator() //
 				.hasArgs() //
 				.build());
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("passwordfile") //
+				.argName("Passwordfile for a vault") //
+				.desc("Format must be vaultName=passwordfile") //
+				.valueSeparator() //
+				.hasArgs() //
+				.build());
 	}
 
 	private final String bindAddr;
 	private final int port;
 	private final Properties vaultPaths;
 	private final Properties vaultPasswords;
+	private final Properties vaultPasswordfiles;
 
 	public Args(CommandLine commandLine) throws ParseException {
 		this.bindAddr = commandLine.getOptionValue("bind", "localhost");
 		this.port = Integer.parseInt(commandLine.getOptionValue("port", "0"));
 		this.vaultPaths = commandLine.getOptionProperties("vault");
 		this.vaultPasswords = commandLine.getOptionProperties("password");
+		this.vaultPasswordfiles = commandLine.getOptionProperties("passwordfile");
 	}
 
 	public String getBindAddr() {
@@ -79,14 +94,33 @@ public class Args {
 	}
 
 	public Set<String> getVaultNames() {
-		return vaultPaths.keySet().stream().filter(vaultPasswords::containsKey).map(String.class::cast).collect(Collectors.toSet());
+		Set<String> filteredVaults = vaultPaths.keySet().stream().filter(vaultPasswords::containsKey).map(String.class::cast).collect(Collectors.toSet());
+		filteredVaults.addAll(vaultPaths.keySet().stream().filter(vaultPasswordfiles::containsKey).map(String.class::cast).collect(Collectors.toSet()));
+		return filteredVaults;
 	}
 
 	public String getVaultPath(String vaultName) {
 		return vaultPaths.getProperty(vaultName);
 	}
 
+	public String getVaultPasswordPath(String vaultName) {	return vaultPasswordfiles.getProperty(vaultName); }
+
 	public String getVaultPassword(String vaultName) {
+		if (vaultPasswords.getProperty(vaultName) == null){
+			Path vaultPasswordPath = Paths.get(vaultPasswordfiles.getProperty(vaultName));
+			if (Files.isReadable(vaultPasswordPath) && Files.isRegularFile(vaultPasswordPath)){
+				try (Stream<String> lines = Files.lines(vaultPasswordPath)) {
+					String vaultPassword = lines.findFirst().get().toString();
+					if (vaultPassword != "") {
+						return vaultPassword;
+					}
+					return null;
+				} catch (IOException e) {
+					return null;
+				}
+			}
+			return null;
+		}
 		return vaultPasswords.getProperty(vaultName);
 	}
 
