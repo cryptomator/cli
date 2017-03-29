@@ -32,8 +32,8 @@ public class Args {
 	private static final String USAGE = "java -jar cryptomator-cli.jar" //
 			+ " --bind localhost --port 8080" //
 			+ " --vault mySecretVault=/path/to/vault --password mySecretVault=FooBar3000" //
-			+ " --vault myOtherVault=/path/to/other/vault --password myOtherVault=BarFoo4000"
-	        + " --vault myThirdVault=/path/to/third/vault --passwordfile myThirdVault=/path/to/passwordfile";
+			+ " --vault myOtherVault=/path/to/other/vault --password myOtherVault=BarFoo4000" //
+			+ " --vault myThirdVault=/path/to/third/vault --passwordfile myThirdVault=/path/to/passwordfile";
 	private static final Options OPTIONS = new Options();
 	static {
 		OPTIONS.addOption(Option.builder() //
@@ -110,9 +110,9 @@ public class Args {
 	}
 
 	public String getVaultPassword(String vaultName) {
-		if (vaultPasswords.getProperty(vaultName) == null){
+		if (vaultPasswords.getProperty(vaultName) == null) {
 			Path vaultPasswordPath = Paths.get(vaultPasswordFiles.getProperty(vaultName));
-			if (Files.isReadable(vaultPasswordPath) && Files.isRegularFile(vaultPasswordPath)){
+			if (Files.isReadable(vaultPasswordPath) && Files.isRegularFile(vaultPasswordPath)) {
 				try (Stream<String> lines = Files.lines(vaultPasswordPath)) {
 					return lines.findFirst().get().toString();
 				} catch (IOException e) {
