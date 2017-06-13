@@ -17,6 +17,7 @@ import org.apache.commons.cli.ParseException;
 import org.cryptomator.cryptofs.CryptoFileSystemProperties;
 import org.cryptomator.cryptofs.CryptoFileSystemProvider;
 import org.cryptomator.frontend.webdav.WebDavServer;
+import org.cryptomator.frontend.webdav.servlet.WebDavServletController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,9 @@ public class CryptomatorCli {
 
 		for (String vaultName : args.getVaultNames()) {
 			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
+			if ((args.getVaultPasswordPath(vaultName) != null) && args.getVaultPassword(vaultName) == null) {
+				throw new IllegalArgumentException("Cannot read password from file: " + Paths.get(args.getVaultPasswordPath(vaultName)));
+			}
 			if (!Files.isDirectory(vaultPath)) {
 				throw new IllegalArgumentException("Not a directory: " + vaultPath);
 			}
@@ -56,7 +60,8 @@ public class CryptomatorCli {
 	}
 
 	private static void startup(Args args) throws IOException {
-		WebDavServer server = WebDavServer.create(args.getBindAddr(), args.getPort());
+		WebDavServer server = WebDavServer.create();
+		server.bind(args.getBindAddr(), args.getPort());
 		server.start();
 
 		for (String vaultName : args.getVaultNames()) {
@@ -65,7 +70,8 @@ public class CryptomatorCli {
 			String vaultPassword = args.getVaultPassword(vaultName);
 			CryptoFileSystemProperties properties = CryptoFileSystemProperties.cryptoFileSystemProperties().withPassphrase(vaultPassword).build();
 			Path vaultRoot = CryptoFileSystemProvider.newFileSystem(vaultPath, properties).getPath("/");
-			server.startWebDavServlet(vaultRoot, vaultName);
+			WebDavServletController servlet = server.createWebDavServlet(vaultRoot, vaultName);
+			servlet.start();
 		}
 
 		waitForShutdown(() -> {
