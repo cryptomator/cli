@@ -17,6 +17,7 @@ import org.apache.commons.cli.ParseException;
 import org.cryptomator.cryptofs.CryptoFileSystemProperties;
 import org.cryptomator.cryptofs.CryptoFileSystemProvider;
 import org.cryptomator.frontend.webdav.WebDavServer;
+import org.cryptomator.frontend.webdav.servlet.WebDavServletController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,8 @@ public class CryptomatorCli {
 			String vaultPassword = args.getVaultPassword(vaultName);
 			CryptoFileSystemProperties properties = CryptoFileSystemProperties.cryptoFileSystemProperties().withPassphrase(vaultPassword).build();
 			Path vaultRoot = CryptoFileSystemProvider.newFileSystem(vaultPath, properties).getPath("/");
-			server.createWebDavServlet(vaultRoot, vaultName);
+			WebDavServletController servlet = server.createWebDavServlet(vaultRoot, vaultName);
+			servlet.start();
 		}
 
 		waitForShutdown(() -> {
