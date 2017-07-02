@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/cryptomator/cli.svg?branch=develop)](https://travis-ci.org/cryptomator/cli)
+[![Latest Release](https://img.shields.io/github/release/cryptomator/cli.svg)](https://github.com/cryptomator/cli/releases/latest)
 
 # Cryptomator CLI version
 
