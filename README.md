@@ -19,7 +19,7 @@ Cryptomator CLI depends on a Java 8 JRE. In addition the JCE unlimited strength 
 java -jar cryptomator-cli-x.y.z.jar \
     --vault demoVault=/path/to/vault --password demoVault=topSecret \
     --vault otherVault=/path/to/differentVault --passwordfile otherVault=/path/to/fileWithPassword \
-    --bind 0.0.0.0 --port 8080
+    --bind 127.0.0.1 --port 8080
 # you can now mount http://localhost:8080/demoVault/
 ```
 
