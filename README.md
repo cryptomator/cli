@@ -23,6 +23,12 @@ java -jar cryptomator-cli-x.y.z.jar \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
+Then you can access the vault using any WebDAV client, e.g. using `davfs2`:
+
+```sh
+sudo mount -t davfs http://localhost:8080/demoVault/ /media/your/mounted/folder
+```
+
 ## License
 
 This project is dual-licensed under the AGPLv3 for FOSS projects as well as a commercial license derived from the LGPL for independent software vendors and resellers. If you want to use this library in applications, that are *not* licensed under the AGPL, feel free to contact our [support team](https://cryptomator.org/help/).
