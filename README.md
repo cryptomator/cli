@@ -25,7 +25,7 @@ java -jar cryptomator-cli-x.y.z.jar \
 
 Then you can access the vault using any WebDAV client, e.g. using `davfs2`:
 
-First you need to creat a mount point for your vault
+First you need to create a mount point for your vault
 
 ```sh
 sudo mkdir /media/your/mounted/folder
