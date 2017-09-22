@@ -1,9 +1,9 @@
 [![Build Status](https://travis-ci.org/cryptomator/cli.svg?branch=develop)](https://travis-ci.org/cryptomator/cli)
 [![Latest Release](https://img.shields.io/github/release/cryptomator/cli/all.svg)](https://github.com/cryptomator/cli/releases/latest)
 
-# Cryptomator CLI version
+# Cryptomator CLI
 
-This is a minimal command line program which unlocks vaults, which can then be accessed via an embedded WebDAV server.
+This is a minimal command-line program that unlocks vaults which can then be accessed via an embedded WebDAV server.
 
 ## Disclaimer
 
@@ -11,9 +11,9 @@ This project is in an early stage and not ready for production use. We recommend
 
 ## Download and Usage
 
-Download the jar file via [GitHub Releases](https://github.com/cryptomator/cli/releases)
+Download the jar file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
 
-Cryptomator CLI depends on a Java 8 JRE. In addition the JCE unlimited strength policy files (needed for 256-bit keys) must be installed.
+Cryptomator CLI depends on Java 8. In addition, the JCE unlimited strength policy files must be installed (needed for 256-bit keys).
 
 ```sh
 java -jar cryptomator-cli-x.y.z.jar \
@@ -23,9 +23,11 @@ java -jar cryptomator-cli-x.y.z.jar \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
-Then you can access the vault using any WebDAV client, e.g. using `davfs2`:
+Then you can access the vault using any WebDAV client.
 
-First you need to create a mount point for your vault
+### Linux via davfs2
+
+First, you need to create a mount point for your vault
 
 ```sh
 sudo mkdir /media/your/mounted/folder
@@ -37,10 +39,24 @@ Then you can mount the vault
 sudo mount -t davfs http://localhost:8080/demoVault/ /media/your/mounted/folder
 ```
 
-To "eject"/unmount the vault use
+To unmount the vault, run
 
 ```sh
 sudo umount /media/your/mounted/folder
+```
+
+### macOS via AppleScript
+
+Mount the vault with
+
+```sh
+osascript -e 'mount volume "http://localhost:8080/demoVault/"'
+```
+
+Unmount the vault with
+
+```sh
+osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
 ```
 
 ## License
