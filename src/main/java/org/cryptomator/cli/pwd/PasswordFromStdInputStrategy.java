@@ -12,6 +12,7 @@ public class PasswordFromStdInputStrategy implements PasswordStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordFromStdInputStrategy.class);
 
     private final String vaultName;
+    private final String inputMessage = "Enter password for vault '%s': ";
 
     public PasswordFromStdInputStrategy(final String vaultName) {
         this.vaultName = vaultName;
@@ -27,7 +28,7 @@ public class PasswordFromStdInputStrategy implements PasswordStrategy {
             LOG.warn("No console: non-interactive mode, instead use insecure replacement, PW is shown!");
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            LOG.info("Enter password: ");
+            System.out.println(String.format(inputMessage, vaultName));
 
             try {
                 password = reader.readLine();
@@ -36,7 +37,7 @@ public class PasswordFromStdInputStrategy implements PasswordStrategy {
                 e.printStackTrace();
             }
         } else {
-            LOG.info("Enter password: ");
+            System.out.println(String.format(inputMessage, vaultName));
             password = new String(console.readPassword());
         }
 
