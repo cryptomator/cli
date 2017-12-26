@@ -35,7 +35,7 @@ public class PasswordFromFileStrategy implements PasswordStrategy {
 
     @Override
     public void validate() throws IllegalArgumentException {
-        if (!Files.isReadable(pathToFile) || !Files.isRegularFile(pathToFile)) {
+        if (!Files.isReadable(pathToFile)) {
             throw new IllegalArgumentException("Cannot read password from file: " + pathToFile);
         }
     }
