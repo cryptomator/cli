@@ -13,7 +13,7 @@ This project is in an early stage and not ready for production use. We recommend
 
 Download the jar file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
 
-Cryptomator CLI depends on Java 8. In addition, the JCE unlimited strength policy files must be installed (needed for 256-bit keys).
+Cryptomator CLI requires that at least JDK 11 is present on your system.
 
 ```sh
 java -jar cryptomator-cli-x.y.z.jar \
