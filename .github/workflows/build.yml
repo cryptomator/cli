@@ -7,6 +7,8 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    outputs:
+      artifact-version: ${{ steps.setversion.outputs.version }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -21,12 +23,17 @@ jobs:
       - name: Ensure to use tagged version
         run: mvn versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/} # use shell parameter expansion to strip of 'refs/tags'
         if: startsWith(github.ref, 'refs/tags/')
+      - name: Export the build version to the environment and fix it as an ouput of this job
+        id: setversion
+        run: |
+          echo "::set-env name=BUILD_VERSION::$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)"
+          echo "::set-output name=version::${BUILD_VERSION}"
       - name: Build and Test
         run: mvn -B install
-      - name: Upload cryptomator-cli-XXX.jar
+      - name: Upload snapshot artifact cryptomator-cli-${{ BUILD_VERSION }}.jar
         uses: actions/upload-artifact@v2
         with:
-          name: cryptomator-cli.jar
+          name: cryptomator-cli-${{ BUILD_VERSION }}.jar
           path: target/cryptomator-cli-*.jar
 
   release:
@@ -38,7 +45,7 @@ jobs:
       - name: Download cryptomator-cli.jar
         uses: actions/download-artifact@v1
         with:
-          name: cryptomator-cli.jar
+          name: cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar
           path: .
       - name: Create Release
         id: create_release
@@ -59,5 +66,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: cryptomator-cli.jar
-          asset_name: cryptomator-cli-${{ github.ref }}.jar
+          asset_name: cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar
           asset_content_type: application/jar
