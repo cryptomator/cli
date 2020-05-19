@@ -24,7 +24,7 @@ jobs:
       - name: Build and Test
         run: mvn -B install
       - name: Upload cryptomator-cli-XXX.jar
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: cryptomator-cli.jar
           path: target/cryptomator-cli-*.jar
