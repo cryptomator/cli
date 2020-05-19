@@ -3,6 +3,9 @@ name: Build
 on:
   [push]
 
+env:
+  BUILD_VERSION: SNAPSHOT
+
 jobs:
   build:
     name: Build and Test
@@ -26,14 +29,15 @@ jobs:
       - name: Export the build version to the environment and fix it as an ouput of this job
         id: setversion
         run: |
-          echo "::set-env name=BUILD_VERSION::$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)"
-          echo "::set-output name=version::${BUILD_VERSION}"
+          v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+          echo "::set-env name=BUILD_VERSION::${v}"
+          echo "::set-output name=version::${v}"
       - name: Build and Test
         run: mvn -B install
-      - name: Upload snapshot artifact cryptomator-cli-XXX.jar
+      - name: Upload snapshot artifact cryptomator-cli-${{ BUILD_VERSION }}.jar
         uses: actions/upload-artifact@v2
         with:
-          name: cryptomator-cli-${{ BUILD_VERSION }}.jar
+          name: cryptomator-cli-${BUILD_VERSION}.jar
           path: target/cryptomator-cli-*.jar
 
   release:
