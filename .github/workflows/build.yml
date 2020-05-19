@@ -36,7 +36,7 @@ jobs:
       - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
         uses: actions/upload-artifact@v2
         with:
-          name: cryptomator-cli-${{ jobs.build.env.BUILD_VERSION }}.jar
+          name: cryptomator-cli-${{ env.BUILD_VERSION }}.jar
           path: target/cryptomator-cli-*.jar
 
   release:
