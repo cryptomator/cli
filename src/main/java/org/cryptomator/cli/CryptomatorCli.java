@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 import org.apache.commons.cli.ParseException;
 import org.cryptomator.cryptofs.CryptoFileSystemProperties;
@@ -40,22 +41,21 @@ public class CryptomatorCli {
 	}
 
 	private static void validate(Args args) throws IllegalArgumentException {
+		Set<String> vaultNames = args.getVaultNames();
 		if (args.getPort() < 0 || args.getPort() > 65536) {
 			throw new IllegalArgumentException("Invalid WebDAV Port.");
 		}
 
-		if (args.getVaultNames().size() == 0) {
+		if (vaultNames.size() == 0) {
 			throw new IllegalArgumentException("No vault specified.");
 		}
 
-		for (String vaultName : args.getVaultNames()) {
+		for (String vaultName : vaultNames) {
 			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
-			if ((args.getVaultPasswordPath(vaultName) != null) && args.getVaultPassword(vaultName) == null) {
-				throw new IllegalArgumentException("Cannot read password from file: " + Paths.get(args.getVaultPasswordPath(vaultName)));
-			}
 			if (!Files.isDirectory(vaultPath)) {
 				throw new IllegalArgumentException("Not a directory: " + vaultPath);
 			}
+			args.addPasswortStrategy(vaultName).validate();
 		}
 	}
 
@@ -67,7 +67,7 @@ public class CryptomatorCli {
 		for (String vaultName : args.getVaultNames()) {
 			Path vaultPath = Paths.get(args.getVaultPath(vaultName));
 			LOG.info("Unlocking vault \"{}\" located at {}", vaultName, vaultPath);
-			String vaultPassword = args.getVaultPassword(vaultName);
+			String vaultPassword = args.getPasswordStrategy(vaultName).password();
 			CryptoFileSystemProperties properties = CryptoFileSystemProperties.cryptoFileSystemProperties().withPassphrase(vaultPassword).build();
 			Path vaultRoot = CryptoFileSystemProvider.newFileSystem(vaultPath, properties).getPath("/");
 			WebDavServletController servlet = server.createWebDavServlet(vaultRoot, vaultName);
