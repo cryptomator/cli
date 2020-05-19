@@ -8,10 +8,10 @@
 	<url>https://github.com/cryptomator/cli</url>
 
 	<properties>
-		<cryptofs.version>1.4.0</cryptofs.version>
-		<webdav-nio.version>0.6.2</webdav-nio.version>
 		<commons.cli.version>1.3.1</commons.cli.version>
 		<logback.version>1.2.2</logback.version>
+		<cryptofs.version>1.9.10</cryptofs.version>
+		<webdav-nio.version>1.0.11</webdav-nio.version>
 
 		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
