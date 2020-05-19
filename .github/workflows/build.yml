@@ -34,10 +34,10 @@ jobs:
           echo "::set-output name=version::${v}"
       - name: Build and Test
         run: mvn -B install
-      - name: Upload snapshot artifact cryptomator-cli-${{ BUILD_VERSION }}.jar
+      - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
         uses: actions/upload-artifact@v2
         with:
-          name: cryptomator-cli-${BUILD_VERSION}.jar
+          name: cryptomator-cli-${{ env.BUILD_VERSION }}.jar
           path: target/cryptomator-cli-*.jar
 
   release:
