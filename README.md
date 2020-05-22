@@ -3,7 +3,9 @@
 
 # Cryptomator CLI
 
-This is a minimal command-line program that unlocks vaults which can then be accessed via an embedded WebDAV server.
+This is a minimal command-line program that unlocks vaults of vault format 7.
+After the unlock the vault content  can then be accessed via an embedded WebDAV server.
+The minium required Java version is JDK 11.
 
 ## Disclaimer
 
