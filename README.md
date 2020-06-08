@@ -25,6 +25,36 @@ java -jar cryptomator-cli-x.y.z.jar \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
+## Using as a docker image
+
+*Bridge networking with port forward:*
+
+```sh
+docker run --rm -p 8080:8080 \
+    -v /path/to/vault:/vaults/vault \
+    -v /path/to/differentVault:/vaults/differentVault \
+    -v /path/to/fileWithPassword:/passwordFile \
+    --bind 0.0.0.0 --port 8080 \
+    cryptomator/cli \
+    --vault demoVault=/vaults/vault --password demoVault=topSecret \
+    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
+# you can now mount http://localhost:8080/demoVault/
+```
+
+*Host networking:*
+
+```sh
+docker run --rm --network=host \
+    -v /path/to/vault:/vaults/vault \
+    -v /path/to/differentVault:/vaults/differentVault \
+    -v /path/to/fileWithPassword:/passwordFile \
+    --bind 127.0.0.1 --port 8080 \
+    cryptomator/cli \
+    --vault demoVault=/vaults/vault --password demoVault=topSecret \
+    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
+# you can now mount http://localhost:8080/demoVault/
+```
+
 Then you can access the vault using any WebDAV client.
 
 ### Linux via davfs2
