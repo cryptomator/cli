@@ -29,6 +29,12 @@ java -jar cryptomator-cli-x.y.z.jar \
 
 *Bridge networking with port forward:*
 
+### !!! WARNING: This approach should only be used to test the containerized approach, not in production.
+
+The reason is that with port forwarding you need to listen on all interfaces, and potencially other devices on the network could also access your WebDAV server exposing your secret files.
+
+Ideally you would run this in a private docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
+
 ```sh
 docker run --rm -p 8080:8080 \
     -v /path/to/vault:/vaults/vault \
