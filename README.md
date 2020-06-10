@@ -27,9 +27,9 @@ java -jar cryptomator-cli-x.y.z.jar \
 
 ## Using as a docker image
 
-*Bridge networking with port forward:*
+### Bridge networking with port forward:
 
-### !!! WARNING: This approach should only be used to test the containerized approach, not in production.
+:warning: **WARNING: This approach should only be used to test the containerized approach, not in production.** :warning:
 
 The reason is that with port forwarding you need to listen on all interfaces, and potencially other devices on the network could also access your WebDAV server exposing your secret files.
 
