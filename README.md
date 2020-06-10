@@ -47,7 +47,7 @@ docker run --rm -p 8080:8080 \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
-*Host networking:*
+### Host networking:
 
 ```sh
 docker run --rm --network=host \
