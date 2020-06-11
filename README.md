@@ -25,6 +25,42 @@ java -jar cryptomator-cli-x.y.z.jar \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
+## Using as a docker image
+
+### Bridge networking with port forward:
+
+:warning: **WARNING: This approach should only be used to test the containerized approach, not in production.** :warning:
+
+The reason is that with port forwarding you need to listen on all interfaces, and potencially other devices on the network could also access your WebDAV server exposing your secret files.
+
+Ideally you would run this in a private docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
+
+```sh
+docker run --rm -p 8080:8080 \
+    -v /path/to/vault:/vaults/vault \
+    -v /path/to/differentVault:/vaults/differentVault \
+    -v /path/to/fileWithPassword:/passwordFile \
+    --bind 0.0.0.0 --port 8080 \
+    cryptomator/cli \
+    --vault demoVault=/vaults/vault --password demoVault=topSecret \
+    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
+# you can now mount http://localhost:8080/demoVault/
+```
+
+### Host networking:
+
+```sh
+docker run --rm --network=host \
+    -v /path/to/vault:/vaults/vault \
+    -v /path/to/differentVault:/vaults/differentVault \
+    -v /path/to/fileWithPassword:/passwordFile \
+    --bind 127.0.0.1 --port 8080 \
+    cryptomator/cli \
+    --vault demoVault=/vaults/vault --password demoVault=topSecret \
+    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
+# you can now mount http://localhost:8080/demoVault/
+```
+
 Then you can access the vault using any WebDAV client.
 
 ### Linux via davfs2
