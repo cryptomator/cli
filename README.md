@@ -25,6 +25,49 @@ java -jar cryptomator-cli-x.y.z.jar \
 # you can now mount http://localhost:8080/demoVault/
 ```
 
+## Filesystem integration
+
+Once the vault is unlocked and the webserver started, you can access the vault by any webdav client or directly mounting it in your filesystem.
+
+### Windows via the Windows Explorer GUI
+
+Open the File Explorer, right click on "This PC" and click on the menu item "Map network drive...".
+In the window opening up, select a free drive letter as the mounting point, enter in the Folder text box the url logged by the cli application to the terminal window and click the "Finish" button.
+
+### Linux via davfs2
+
+First, you need to create a mount point for your vault
+
+```sh
+sudo mkdir /media/your/mounted/folder
+```
+
+Then you can mount the vault
+
+```sh
+sudo mount -t davfs http://localhost:8080/demoVault/ /media/your/mounted/folder
+```
+
+To unmount the vault, run
+
+```sh
+sudo umount /media/your/mounted/folder
+```
+
+### macOS via AppleScript
+
+Mount the vault with
+
+```sh
+osascript -e 'mount volume "http://localhost:8080/demoVault/"'
+```
+
+Unmount the vault with
+
+```sh
+osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
+```
+
 ## Using as a docker image
 
 ### Bridge networking with port forward:
@@ -63,39 +106,6 @@ docker run --rm --network=host \
 
 Then you can access the vault using any WebDAV client.
 
-### Linux via davfs2
-
-First, you need to create a mount point for your vault
-
-```sh
-sudo mkdir /media/your/mounted/folder
-```
-
-Then you can mount the vault
-
-```sh
-sudo mount -t davfs http://localhost:8080/demoVault/ /media/your/mounted/folder
-```
-
-To unmount the vault, run
-
-```sh
-sudo umount /media/your/mounted/folder
-```
-
-### macOS via AppleScript
-
-Mount the vault with
-
-```sh
-osascript -e 'mount volume "http://localhost:8080/demoVault/"'
-```
-
-Unmount the vault with
-
-```sh
-osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
-```
 
 ## License
 
