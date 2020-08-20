@@ -12,6 +12,7 @@
 		<webdav-nio.version>1.0.11</webdav-nio.version>
 		<commons.cli.version>1.4</commons.cli.version>
 		<logback.version>1.2.3</logback.version>
+		<fuse-nio.version>1.2.4</fuse-nio.version>
 
 		<java.version>11</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,6 +46,11 @@
 			<groupId>org.cryptomator</groupId>
 			<artifactId>webdav-nio-adapter</artifactId>
 			<version>${webdav-nio.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cryptomator</groupId>
+			<artifactId>fuse-nio-adapter</artifactId>
+			<version>${fuse-nio.version}</version>
 		</dependency>
 
 		<!-- Commons -->
