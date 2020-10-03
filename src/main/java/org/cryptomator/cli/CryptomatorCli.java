@@ -116,12 +116,18 @@ public class CryptomatorCli {
 	private static void waitForShutdown(Runnable runnable) {
 		Runtime.getRuntime().addShutdownHook(new Thread(runnable));
 		LOG.info("Press Ctrl+C to terminate.");
+
+		// Block the main thread infinitely as otherwise when using
+		// Fuse mounts the application quits immediately.
 		try {
-			while (true) {
-				System.in.read();
+			Object mainThreadBlockLock = new Object();
+			synchronized (mainThreadBlockLock) {
+				while (true) {
+					mainThreadBlockLock.wait();
+				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			LOG.error("Main thread blocking failed.");
 		}
 	}
 }
