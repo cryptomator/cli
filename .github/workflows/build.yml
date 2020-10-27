@@ -7,6 +7,8 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    #This check is case insensitive
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     outputs:
       artifact-version: ${{ steps.setversion.outputs.version }}
     env:
