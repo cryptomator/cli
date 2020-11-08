@@ -14,12 +14,14 @@ public class FuseMount {
 	private static final Logger LOG = LoggerFactory.getLogger(FuseMount.class);
 
 	private Path vaultRoot;
+	private Path vaultPath;
 	private Path mountPoint;
 	private Mount mnt;
 
-	public FuseMount(Path vaultRoot, Path mountPoint) {
+	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint) {
 		this.vaultRoot = vaultRoot;
 		this.mountPoint = mountPoint;
+		this.vaultPath = vaultPath;
 		this.mnt = null;
 	}
 
@@ -31,7 +33,14 @@ public class FuseMount {
 
 		try {
 			Mounter mounter = FuseMountFactory.getMounter();
-			EnvironmentVariables envVars = EnvironmentVariables.create().withFlags(mounter.defaultMountFlags())
+			String[] mountFlags = mounter.defaultMountFlags();
+			String[] newMountFlags = new String[mountFlags.length+2];
+			for (int i = 0 ; i < mountFlags.length ; i++) {
+				newMountFlags[i] = mountFlags[i];
+			}
+			newMountFlags[mountFlags.length] = "-osubtype=cryptomator";
+			newMountFlags[mountFlags.length+1] ="-ofsname=cryptomator@"+vaultPath;
+			EnvironmentVariables envVars = EnvironmentVariables.create().withFlags(newMountFlags)
 					.withMountPoint(mountPoint).build();
 			mnt = mounter.mount(vaultRoot, envVars);
 			LOG.info("Mounted to {}", mountPoint);
