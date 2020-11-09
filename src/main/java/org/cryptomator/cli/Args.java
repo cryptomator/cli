@@ -79,11 +79,27 @@ public class Args {
 				.valueSeparator() //
 				.hasArgs() //
 				.build());
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("subtype") //
+				.argName("fuse subtype") //
+				.desc("Format must be vaultName=fuse subtype") //
+				.valueSeparator() //
+				.hasArgs() //
+				.build());
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("fsname") //
+				.argName("fuse fsname") //
+				.desc("Format must be vaultName=fuse fsname") //
+				.valueSeparator() //
+				.hasArgs() //
+				.build());
 	}
 
 	private final String bindAddr;
 	private final int port;
 	private final boolean hasValidWebDavConfig;
+	private final Properties fuseSubType;
+	private final Properties fuseFSName;
 	private final Properties vaultPaths;
 	private final Properties vaultPasswords;
 	private final Properties vaultPasswordFiles;
@@ -105,6 +121,8 @@ public class Args {
 		this.vaultPasswordFiles = commandLine.getOptionProperties("passwordfile");
 		this.passwordStrategies = new HashMap<>();
 		this.fuseMountPoints = commandLine.getOptionProperties("fusemount");
+		this.fuseFSName = commandLine.getOptionProperties("fsname");
+		this.fuseSubType = commandLine.getOptionProperties("subtype");
 	}
 
 	public boolean hasValidWebDavConf() {
@@ -113,6 +131,14 @@ public class Args {
 
 	public String getBindAddr() {
 		return bindAddr;
+	}
+
+	public String fuseFSName(String vaultName) {
+		return fuseFSName.getProperty(vaultName);
+	}
+
+	public String fuseSubType(String vaultName) {
+		return fuseSubType.getProperty(vaultName);
 	}
 
 	public int getPort() {

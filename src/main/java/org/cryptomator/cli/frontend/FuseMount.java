@@ -17,11 +17,15 @@ public class FuseMount {
 	private Path vaultPath;
 	private Path mountPoint;
 	private Mount mnt;
+	private String fsName;
+	private String subtype;
 
-	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint) {
+	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint, String fsName, String subtype) {
 		this.vaultRoot = vaultRoot;
 		this.mountPoint = mountPoint;
 		this.vaultPath = vaultPath;
+		this.fsName = fsName;
+		this.subtype = subtype;
 		this.mnt = null;
 	}
 
@@ -34,12 +38,29 @@ public class FuseMount {
 		try {
 			Mounter mounter = FuseMountFactory.getMounter();
 			String[] mountFlags = mounter.defaultMountFlags();
-			String[] newMountFlags = new String[mountFlags.length+2];
-			for (int i = 0 ; i < mountFlags.length ; i++) {
-				newMountFlags[i] = mountFlags[i];
+			String[] newMountFlags;
+
+			if (subtype == null && fsName == null) {
+				newMountFlags = mountFlags;
+			}else if (subtype != null && fsName != null){
+				newMountFlags = new String[mountFlags.length+2];
+				for (int i = 0 ; i < mountFlags.length ; i++) {
+					newMountFlags[i] = mountFlags[i];
+				}
+				newMountFlags[mountFlags.length] = "-osubtype=" + subtype;
+				newMountFlags[mountFlags.length+1] ="-ofsname="+fsName;
+			}else{
+				newMountFlags = new String[mountFlags.length+1];
+				for (int i = 0 ; i < mountFlags.length ; i++) {
+					newMountFlags[i] = mountFlags[i];
+				}
+				if (subtype != null) {
+					newMountFlags[mountFlags.length] = "-osubtype=" + subtype;
+				}else{
+					newMountFlags[mountFlags.length] ="-ofsname="+fsName;
+				}
 			}
-			newMountFlags[mountFlags.length] = "-osubtype=cryptomator";
-			newMountFlags[mountFlags.length+1] ="-ofsname=cryptomator@"+vaultPath;
+
 			EnvironmentVariables envVars = EnvironmentVariables.create().withFlags(newMountFlags)
 					.withMountPoint(mountPoint).build();
 			mnt = mounter.mount(vaultRoot, envVars);
