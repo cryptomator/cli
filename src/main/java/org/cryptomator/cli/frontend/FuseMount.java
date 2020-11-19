@@ -1,6 +1,8 @@
 package org.cryptomator.cli.frontend;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.cryptomator.frontend.fuse.mount.CommandFailedException;
 import org.cryptomator.frontend.fuse.mount.EnvironmentVariables;
@@ -17,15 +19,13 @@ public class FuseMount {
 	private Path vaultPath;
 	private Path mountPoint;
 	private Mount mnt;
-	private String fsName;
-	private String subtype;
+	private String mountFlags;
 
-	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint, String fsName, String subtype) {
+	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint, String mountFlags) {
 		this.vaultRoot = vaultRoot;
 		this.mountPoint = mountPoint;
 		this.vaultPath = vaultPath;
-		this.fsName = fsName;
-		this.subtype = subtype;
+		this.mountFlags = mountFlags;
 		this.mnt = null;
 	}
 
@@ -37,32 +37,22 @@ public class FuseMount {
 
 		try {
 			Mounter mounter = FuseMountFactory.getMounter();
-			String[] mountFlags = mounter.defaultMountFlags();
-			String[] newMountFlags;
 
-			if (subtype == null && fsName == null) {
-				newMountFlags = mountFlags;
-			}else if (subtype != null && fsName != null){
-				newMountFlags = new String[mountFlags.length+2];
-				for (int i = 0 ; i < mountFlags.length ; i++) {
-					newMountFlags[i] = mountFlags[i];
+			EnvironmentVariables envVars ;
+
+			if (mountFlags != null) {
+				ArrayList<String> defaultMountFlags = new ArrayList<String>(Arrays.asList(mounter.defaultMountFlags()));
+				for (String it : mountFlags.split(",")) {
+					defaultMountFlags.add("-o"+it.replace(' ','='));
 				}
-				newMountFlags[mountFlags.length] = "-osubtype=" + subtype;
-				newMountFlags[mountFlags.length+1] ="-ofsname="+fsName;
+				String[] newMountFlags = defaultMountFlags.toArray(new String[defaultMountFlags.size()]);
+				envVars = EnvironmentVariables.create().withFlags(newMountFlags)
+							.withMountPoint(mountPoint).build();
 			}else{
-				newMountFlags = new String[mountFlags.length+1];
-				for (int i = 0 ; i < mountFlags.length ; i++) {
-					newMountFlags[i] = mountFlags[i];
-				}
-				if (subtype != null) {
-					newMountFlags[mountFlags.length] = "-osubtype=" + subtype;
-				}else{
-					newMountFlags[mountFlags.length] ="-ofsname="+fsName;
-				}
+				envVars = EnvironmentVariables.create().withFlags(mounter.defaultMountFlags())
+							.withMountPoint(mountPoint).build();
 			}
 
-			EnvironmentVariables envVars = EnvironmentVariables.create().withFlags(newMountFlags)
-					.withMountPoint(mountPoint).build();
 			mnt = mounter.mount(vaultRoot, envVars);
 			LOG.info("Mounted to {}", mountPoint);
 		} catch (CommandFailedException e) {
