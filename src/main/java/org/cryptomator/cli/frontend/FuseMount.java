@@ -16,15 +16,13 @@ public class FuseMount {
 	private static final Logger LOG = LoggerFactory.getLogger(FuseMount.class);
 
 	private Path vaultRoot;
-	private Path vaultPath;
 	private Path mountPoint;
 	private Mount mnt;
 	private String mountFlags;
 
-	public FuseMount(Path vaultRoot, Path vaultPath, Path mountPoint, String mountFlags) {
+	public FuseMount(Path vaultRoot, Path mountPoint, String mountFlags) {
 		this.vaultRoot = vaultRoot;
 		this.mountPoint = mountPoint;
-		this.vaultPath = vaultPath;
 		this.mountFlags = mountFlags;
 		this.mnt = null;
 	}
