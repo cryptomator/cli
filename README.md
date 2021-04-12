@@ -83,8 +83,8 @@ docker run --rm -p 8080:8080 \
     -v /path/to/vault:/vaults/vault \
     -v /path/to/differentVault:/vaults/differentVault \
     -v /path/to/fileWithPassword:/passwordFile \
-    --bind 0.0.0.0 --port 8080 \
     cryptomator/cli \
+    --bind 0.0.0.0 --port 8080 \
     --vault demoVault=/vaults/vault --password demoVault=topSecret \
     --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
 # you can now mount http://localhost:8080/demoVault/
@@ -97,8 +97,8 @@ docker run --rm --network=host \
     -v /path/to/vault:/vaults/vault \
     -v /path/to/differentVault:/vaults/differentVault \
     -v /path/to/fileWithPassword:/passwordFile \
-    --bind 127.0.0.1 --port 8080 \
     cryptomator/cli \
+    --bind 127.0.0.1 --port 8080 \
     --vault demoVault=/vaults/vault --password demoVault=topSecret \
     --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
 # you can now mount http://localhost:8080/demoVault/
