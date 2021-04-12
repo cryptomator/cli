@@ -31,8 +31,7 @@ jobs:
         id: setversion
         run: |
           v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-          echo "::set-env name=BUILD_VERSION::${v}"
-          echo "::set-output name=version::${v}"
+          echo "BUILD_VERSION=${v}" >> $GITHUB_ENV
       - name: Build and Test
         run: mvn -B install
       - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
