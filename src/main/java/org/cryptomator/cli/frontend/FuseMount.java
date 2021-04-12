@@ -1,6 +1,8 @@
 package org.cryptomator.cli.frontend;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.cryptomator.frontend.fuse.mount.CommandFailedException;
 import org.cryptomator.frontend.fuse.mount.EnvironmentVariables;
@@ -16,10 +18,12 @@ public class FuseMount {
 	private Path vaultRoot;
 	private Path mountPoint;
 	private Mount mnt;
+	private String mountFlags;
 
-	public FuseMount(Path vaultRoot, Path mountPoint) {
+	public FuseMount(Path vaultRoot, Path mountPoint, String mountFlags) {
 		this.vaultRoot = vaultRoot;
 		this.mountPoint = mountPoint;
+		this.mountFlags = mountFlags;
 		this.mnt = null;
 	}
 
@@ -31,8 +35,22 @@ public class FuseMount {
 
 		try {
 			Mounter mounter = FuseMountFactory.getMounter();
-			EnvironmentVariables envVars = EnvironmentVariables.create().withFlags(mounter.defaultMountFlags())
-					.withMountPoint(mountPoint).build();
+
+			EnvironmentVariables envVars ;
+
+			if (mountFlags != null) {
+				ArrayList<String> defaultMountFlags = new ArrayList<String>(Arrays.asList(mounter.defaultMountFlags()));
+				for (String it : mountFlags.split(",")) {
+					defaultMountFlags.add("-o"+it.replace(' ','='));
+				}
+				String[] newMountFlags = defaultMountFlags.toArray(new String[defaultMountFlags.size()]);
+				envVars = EnvironmentVariables.create().withFlags(newMountFlags)
+							.withMountPoint(mountPoint).build();
+			}else{
+				envVars = EnvironmentVariables.create().withFlags(mounter.defaultMountFlags())
+							.withMountPoint(mountPoint).build();
+			}
+
 			mnt = mounter.mount(vaultRoot, envVars);
 			LOG.info("Mounted to {}", mountPoint);
 		} catch (CommandFailedException e) {
