@@ -21,8 +21,11 @@ Cryptomator CLI requires that at least JDK 17 is present on your system.
 java -jar cryptomator-cli-x.y.z.jar \
     --vault demoVault=/path/to/vault --password demoVault=topSecret \
     --vault otherVault=/path/to/differentVault --passwordfile otherVault=/path/to/fileWithPassword \
+    --vault thirdVault=/path/to/thirdVault  \
     --bind 127.0.0.1 --port 8080
-# you can now mount http://localhost:8080/demoVault/
+# You can now mount http://localhost:8080/demoVault/, 
+# The password for the thirdVault is read from stdin.
+# Be aware that passing the password on the commandline typically makes it visible to anyone on your system!
 ```
 
 ## Filesystem integration
@@ -45,7 +48,8 @@ sudo mkdir /media/your/mounted/folder
 Then you can mount the vault
 
 ```sh
-sudo mount -t davfs http://localhost:8080/demoVault/ /media/your/mounted/folder
+echo | sudo mount -t davfs -o username=,user,gid=1000,uid=1000 http://localhost:8080/demoVault/ /media/your/mounted/folder
+# Replace gid/uid with your gid/uid. The echo is used to skip over the password query from davfs
 ```
 
 To unmount the vault, run
