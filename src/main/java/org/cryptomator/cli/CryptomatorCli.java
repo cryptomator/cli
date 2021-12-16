@@ -102,7 +102,8 @@ public class CryptomatorCli {
 
 			Path fuseMountPoint = args.getFuseMountPoint(vaultName);
 			if (fuseMountPoint != null) {
-				FuseMount newMount = new FuseMount(vaultRoot, fuseMountPoint);
+				String mountFlags = args.fuseMountFlags(vaultName);
+				FuseMount newMount = new FuseMount(vaultRoot, fuseMountPoint, mountFlags);
 				if (newMount.mount()) {
 					mounts.add(newMount);
 				}
