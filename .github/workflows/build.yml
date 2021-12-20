@@ -11,8 +11,6 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     outputs:
       artifactVersion: ${{ steps.setversion.outputs.version }}
-    env:
-      BUILD_VERSION: SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -27,18 +25,17 @@ jobs:
       - name: Ensure to use tagged version
         run: mvn versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/} # use shell parameter expansion to strip of 'refs/tags'
         if: startsWith(github.ref, 'refs/tags/')
-      - name: Export the project version to the job environment and fix it as an ouput of this job
+      - name: Output project version
         id: setversion
         run: |
-          v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-          echo "BUILD_VERSION=${v}" >> $GITHUB_ENV
-          echo "::set-output name=artifactVersion::${env.BUILD_VERSION}"
+          BUILD_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+          echo "::set-output name=version::${BUILD_VERSION}"
       - name: Build and Test
         run: mvn -B install
-      - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
+      - name: Upload artifact cryptomator-cli-{{ steps.setversion.outputs.version }}.jar
         uses: actions/upload-artifact@v2
         with:
-          name: cryptomator-cli-${{ env.BUILD_VERSION }}.jar
+          name: cryptomator-cli-${{ steps.setversion.outputs.version }}.jar
           path: target/cryptomator-cli-*.jar
 
   release:
