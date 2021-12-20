@@ -8,6 +8,7 @@
  *******************************************************************************/
 package org.cryptomator.cli;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,22 +72,43 @@ public class Args {
 				.valueSeparator() //
 				.hasArgs() //
 				.build());
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("fusemount") //
+				.argName("mount point") //
+				.desc("Format must be vaultName=mountpoint") //
+				.valueSeparator() //
+				.hasArgs() //
+				.build());
 	}
 
 	private final String bindAddr;
 	private final int port;
+	private final boolean hasValidWebDavConfig;
 	private final Properties vaultPaths;
 	private final Properties vaultPasswords;
 	private final Properties vaultPasswordFiles;
 	private final Map<String, PasswordStrategy> passwordStrategies;
+	private final Properties fuseMountPoints;
 
 	public Args(CommandLine commandLine) throws ParseException {
-		this.bindAddr = commandLine.getOptionValue("bind", "localhost");
-		this.port = Integer.parseInt(commandLine.getOptionValue("port", "0"));
+		if (commandLine.hasOption("bind") && commandLine.hasOption("port")) {
+			hasValidWebDavConfig = true;
+			this.bindAddr = commandLine.getOptionValue("bind", "localhost");
+			this.port = Integer.parseInt(commandLine.getOptionValue("port", "0"));
+		} else {
+			hasValidWebDavConfig = false;
+			this.bindAddr = "";
+			this.port = -1;
+		}
 		this.vaultPaths = commandLine.getOptionProperties("vault");
 		this.vaultPasswords = commandLine.getOptionProperties("password");
 		this.vaultPasswordFiles = commandLine.getOptionProperties("passwordfile");
 		this.passwordStrategies = new HashMap<>();
+		this.fuseMountPoints = commandLine.getOptionProperties("fusemount");
+	}
+
+	public boolean hasValidWebDavConf() {
+		return hasValidWebDavConfig;
 	}
 
 	public String getBindAddr() {
@@ -118,15 +140,10 @@ public class Args {
 		PasswordStrategy passwordStrategy = new PasswordFromStdInputStrategy(vaultName);
 
 		if (vaultPasswords.getProperty(vaultName) != null) {
-			passwordStrategy = new PasswordFromPropertyStrategy(
-					vaultName,
-					vaultPasswords.getProperty(vaultName)
-			);
+			passwordStrategy = new PasswordFromPropertyStrategy(vaultName, vaultPasswords.getProperty(vaultName));
 		} else if (vaultPasswordFiles.getProperty(vaultName) != null) {
-			passwordStrategy = new PasswordFromFileStrategy(
-					vaultName,
-					Paths.get(vaultPasswordFiles.getProperty(vaultName))
-			);
+			passwordStrategy = new PasswordFromFileStrategy(vaultName,
+					Paths.get(vaultPasswordFiles.getProperty(vaultName)));
 		}
 
 		this.passwordStrategies.put(vaultName, passwordStrategy);
@@ -135,5 +152,14 @@ public class Args {
 
 	public PasswordStrategy getPasswordStrategy(final String vaultName) {
 		return passwordStrategies.get(vaultName);
+	}
+
+	public Path getFuseMountPoint(String vaultName) {
+		String mountPoint = fuseMountPoints.getProperty(vaultName);
+		if (mountPoint == null) {
+			return null;
+		}
+		Path mountPointPath = Paths.get(mountPoint);
+		return mountPointPath;
 	}
 }

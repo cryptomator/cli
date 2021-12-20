@@ -7,6 +7,8 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
+    #This check is case insensitive
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     outputs:
       artifact-version: ${{ steps.setversion.outputs.version }}
     env:
@@ -15,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
         with:
-          java-version: 14
+          java-version: 17
       - uses: actions/cache@v1
         with:
           path: ~/.m2/repository
@@ -29,8 +31,7 @@ jobs:
         id: setversion
         run: |
           v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-          echo "::set-env name=BUILD_VERSION::${v}"
-          echo "::set-output name=version::${v}"
+          echo "BUILD_VERSION=${v}" >> $GITHUB_ENV
       - name: Build and Test
         run: mvn -B install
       - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
