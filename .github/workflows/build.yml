@@ -30,8 +30,8 @@ jobs:
       - name: Export the project version to the job environment and fix it as an ouput of this job
         id: setversion
         run: |
-          v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-          echo "BUILD_VERSION=${v}" >> $GITHUB_ENV
+          BUILD_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+          echo "${BUILD_VERSION}" >> $GITHUB_ENV
           echo "::set-output name=artifactVersion::${BUILD_VERSION}"
       - name: Build and Test
         run: mvn -B install
