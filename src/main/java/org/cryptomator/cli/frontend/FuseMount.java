@@ -1,14 +1,14 @@
 package org.cryptomator.cli.frontend;
 
-import java.nio.file.Path;
-
-import org.cryptomator.frontend.fuse.mount.CommandFailedException;
 import org.cryptomator.frontend.fuse.mount.EnvironmentVariables;
+import org.cryptomator.frontend.fuse.mount.FuseMountException;
 import org.cryptomator.frontend.fuse.mount.FuseMountFactory;
 import org.cryptomator.frontend.fuse.mount.Mount;
 import org.cryptomator.frontend.fuse.mount.Mounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
 
 public class FuseMount {
 	private static final Logger LOG = LoggerFactory.getLogger(FuseMount.class);
@@ -35,7 +35,7 @@ public class FuseMount {
 					.withMountPoint(mountPoint).build();
 			mnt = mounter.mount(vaultRoot, envVars);
 			LOG.info("Mounted to {}", mountPoint);
-		} catch (CommandFailedException e) {
+		} catch (FuseMountException e) {
 			LOG.error("Can't mount: {}, error: {}", mountPoint, e.getMessage());
 			return false;
 		}
@@ -46,7 +46,7 @@ public class FuseMount {
 		try {
 			mnt.unmount();
 			LOG.info("Unmounted {}", mountPoint);
-		} catch (CommandFailedException e) {
+		} catch (FuseMountException e) {
 			LOG.error("Can't unmount gracefully: {}. Force unmount.", e.getMessage());
 			forceUnmount();
 		}
@@ -56,7 +56,7 @@ public class FuseMount {
 		try {
 			mnt.unmountForced();
 			LOG.info("Unmounted {}", mountPoint);
-		} catch (CommandFailedException e) {
+		} catch (FuseMountException e) {
 			LOG.error("Force unmount failed: {}", e.getMessage());
 		}
 	}
