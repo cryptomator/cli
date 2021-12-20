@@ -3,17 +3,17 @@
 
 # Cryptomator CLI
 
-This is a minimal command-line program that unlocks vaults of vault format 8.
-After the unlock the vault content  can then be accessed via an embedded WebDAV server.
-The minium required Java version is JDK 17.
+This is a minimal command-line application that unlocks vaults of vault format 8.
+After unlocking the vaults, its vault content can be accessed via an embedded WebDAV server.
+The minimum required Java version is JDK 17.
 
 ## Disclaimer
 
-This project is in an early stage and not ready for production use. We recommend to use it only for testing and evaluation purposes.
+:warning: This project is in an early stage and not ready for production use. We recommend using it only for testing and evaluation purposes.
 
 ## Download and Usage
 
-Download the jar file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
+Download the JAR file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
 
 Cryptomator CLI requires that at least JDK 17 is present on your system.
 
@@ -23,36 +23,39 @@ java -jar cryptomator-cli-x.y.z.jar \
     --vault otherVault=/path/to/differentVault --passwordfile otherVault=/path/to/fileWithPassword \
     --vault thirdVault=/path/to/thirdVault  \
     --bind 127.0.0.1 --port 8080
-# You can now mount http://localhost:8080/demoVault/, 
-# The password for the thirdVault is read from stdin.
-# Be aware that passing the password on the commandline typically makes it visible to anyone on your system!
+# You can now mount http://localhost:8080/demoVault/
+# The password for the third vault is read from stdin
+# Be aware that passing the password on the command-line typically makes it visible to anyone on your system!
 ```
 
-## Filesystem integration
+## Filesystem Integration
 
-Once the vault is unlocked and the webserver started, you can access the vault by any webdav client or directly mounting it in your filesystem.
+Once the vault is unlocked and the WebDAV server started, you can access the vault by any WebDAV client or directly mounting it in your filesystem.
 
-### Windows via the Windows Explorer GUI
+### Windows via Windows Explorer
 
 Open the File Explorer, right click on "This PC" and click on the menu item "Map network drive...".
-In the window opening up, select a free drive letter as the mounting point, enter in the Folder text box the url logged by the cli application to the terminal window and click the "Finish" button.
+
+1. In the Drive list, select a drive letter. (Any available letter will do.)
+2. In the Folder box, enter the URL logged by the Cryptomator CLI application.
+3. Select Finish.
 
 ### Linux via davfs2
 
-First, you need to create a mount point for your vault
+First, you need to create a mount point for your vault:
 
 ```sh
 sudo mkdir /media/your/mounted/folder
 ```
 
-Then you can mount the vault
+Then you can mount the vault:
 
 ```sh
 echo | sudo mount -t davfs -o username=,user,gid=1000,uid=1000 http://localhost:8080/demoVault/ /media/your/mounted/folder
 # Replace gid/uid with your gid/uid. The echo is used to skip over the password query from davfs
 ```
 
-To unmount the vault, run
+To unmount the vault, run:
 
 ```sh
 sudo umount /media/your/mounted/folder
@@ -60,27 +63,27 @@ sudo umount /media/your/mounted/folder
 
 ### macOS via AppleScript
 
-Mount the vault with
+Mount the vault with:
 
 ```sh
 osascript -e 'mount volume "http://localhost:8080/demoVault/"'
 ```
 
-Unmount the vault with
+Unmount the vault with:
 
 ```sh
 osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
 ```
 
-## Using as a docker image
+## Using as a Docker image
 
-### Bridge networking with port forward:
+### Bridge Network with Port Forwarding
 
 :warning: **WARNING: This approach should only be used to test the containerized approach, not in production.** :warning:
 
-The reason is that with port forwarding you need to listen on all interfaces, and potencially other devices on the network could also access your WebDAV server exposing your secret files.
+The reason is that with port forwarding, you need to listen on all interfaces. Other devices on the network could also access your WebDAV server and potentially expose your secret files.
 
-Ideally you would run this in a private docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
+Ideally, you would run this in a private Docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
 
 ```sh
 docker run --rm -p 8080:8080 \
@@ -91,10 +94,10 @@ docker run --rm -p 8080:8080 \
     --bind 0.0.0.0 --port 8080 \
     --vault demoVault=/vaults/vault --password demoVault=topSecret \
     --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# you can now mount http://localhost:8080/demoVault/
+# You can now mount http://localhost:8080/demoVault/
 ```
 
-### Host networking:
+### Host Network
 
 ```sh
 docker run --rm --network=host \
@@ -105,11 +108,10 @@ docker run --rm --network=host \
     --bind 127.0.0.1 --port 8080 \
     --vault demoVault=/vaults/vault --password demoVault=topSecret \
     --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# you can now mount http://localhost:8080/demoVault/
+# You can now mount http://localhost:8080/demoVault/
 ```
 
 Then you can access the vault using any WebDAV client.
-
 
 ## License
 
