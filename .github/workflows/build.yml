@@ -10,7 +10,7 @@ jobs:
     #This check is case insensitive
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     outputs:
-      artifact-version: ${{ steps.setversion.outputs.version }}
+      artifactVersion: ${{ steps.setversion.outputs.version }}
     env:
       BUILD_VERSION: SNAPSHOT
     steps:
@@ -49,7 +49,7 @@ jobs:
       - name: Download cryptomator-cli.jar
         uses: actions/download-artifact@v1
         with:
-          name: cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar
+          name: cryptomator-cli-${{ needs.build.outputs.artifactVersion }}.jar
           path: .
       - name: Create Release
         id: create_release
@@ -63,12 +63,12 @@ jobs:
             :construction: Work in Progress
           draft: true
           prerelease: false
-      - name: Upload cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar to GitHub Releases
+      - name: Upload cryptomator-cli-${{ needs.build.outputs.artifactVersion }}.jar to GitHub Releases
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar
-          asset_name: cryptomator-cli-${{ needs.build.outputs.artifact-version }}.jar
+          asset_path: cryptomator-cli-${{ needs.build.outputs.artifactVersion }}.jar
+          asset_name: cryptomator-cli-${{ needs.build.outputs.artifactVersion }}.jar
           asset_content_type: application/jar
