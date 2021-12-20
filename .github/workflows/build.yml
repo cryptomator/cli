@@ -30,9 +30,9 @@ jobs:
       - name: Export the project version to the job environment and fix it as an ouput of this job
         id: setversion
         run: |
-          BUILD_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
-          echo "${BUILD_VERSION}" >> $GITHUB_ENV
-          echo "::set-output name=artifactVersion::${BUILD_VERSION}"
+          v=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+          echo "BUILD_VERSION=${v}" >> $GITHUB_ENV
+          echo "::set-output name=artifactVersion::${env.BUILD_VERSION}"
       - name: Build and Test
         run: mvn -B install
       - name: Upload snapshot artifact cryptomator-cli-${{ env.BUILD_VERSION }}.jar
