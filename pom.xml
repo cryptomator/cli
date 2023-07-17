@@ -8,7 +8,7 @@
 	<url>https://github.com/cryptomator/cli</url>
 
 	<properties>
-		<cryptofs.version>2.3.1</cryptofs.version>
+		<cryptofs.version>2.6.5</cryptofs.version>
 		<webdav-nio.version>1.2.6</webdav-nio.version>
 		<commons.cli.version>1.5.0</commons.cli.version>
 		<logback.version>1.2.9</logback.version>
@@ -42,17 +42,42 @@
 			<artifactId>cryptofs</artifactId>
 			<version>${cryptofs.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>30.1.1-jre</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.cryptomator</groupId>
 			<artifactId>webdav-nio-adapter</artifactId>
 			<version>${webdav-nio.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.cryptomator</groupId>
 			<artifactId>fuse-nio-adapter</artifactId>
 			<version>${fuse-nio.version}</version>
+			<exclusions>
+        		<exclusion>
+            		<groupId>com.google.dagger</groupId>
+            		<artifactId>dagger</artifactId>
+        		</exclusion>
+    		</exclusions>
 		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.31</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.dagger</groupId>
+			<artifactId>dagger</artifactId>
+			<version>2.39.1</version>
+		</dependency>
 		<!-- Commons -->
 		<dependency>
 			<groupId>commons-cli</groupId>
