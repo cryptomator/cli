@@ -9,7 +9,7 @@
 
 	<properties>
 		<cryptofs.version>2.6.5</cryptofs.version>
-		<webdav-nio.version>1.2.6</webdav-nio.version>
+		<webdav-nio.version>2.0.3</webdav-nio.version>
 		<commons.cli.version>1.5.0</commons.cli.version>
 		<logback.version>1.2.9</logback.version>
 		<fuse-nio.version>1.3.3</fuse-nio.version>
