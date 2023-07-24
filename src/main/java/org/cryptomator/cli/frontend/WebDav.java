@@ -1,5 +1,8 @@
 package org.cryptomator.cli.frontend;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -13,14 +16,16 @@ public class WebDav {
 	private static final Logger LOG = LoggerFactory.getLogger(WebDav.class);
 
 	private final WebDavServer server;
-	private ArrayList<WebDavServletController> servlets;
+	private ArrayList<WebDavServletController> servlets = new ArrayList<>();
 
 	public WebDav(String bindAddr, int port) {
-		servlets = new ArrayList<>();
-		server = WebDavServer.create();
-		server.bind(bindAddr, port);
-		server.start();
-		LOG.info("WebDAV server started: {}:{}", bindAddr, port);
+		try {
+			server = WebDavServer.create(new InetSocketAddress(InetAddress.getByName(bindAddr), port));
+			server.start();
+			LOG.info("WebDAV server started: {}:{}", bindAddr, port);
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException("Error creating WebDavServer", e);
+		}
 	}
 
 	public void stop() {
