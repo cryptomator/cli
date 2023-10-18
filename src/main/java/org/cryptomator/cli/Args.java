@@ -112,6 +112,10 @@ public class Args {
 		this.passwordStrategies = new HashMap<>();
 		this.fuseMountPoints = commandLine.getOptionProperties("fusemount");
 		this.hasVersion = commandLine.hasOption("version");
+
+		if (hasVersion()) {
+			printVersionAndExit();
+		}
 	}
 
 	public boolean hasValidWebDavConf() {
@@ -172,5 +176,11 @@ public class Args {
 
 	public boolean hasVersion() {
 		return hasVersion;
+	}
+
+	public void printVersionAndExit() {
+		String version = Version.IMPLEMENTATION_VERSION;
+		System.out.println(version);
+		System.exit(0);
 	}
 }
