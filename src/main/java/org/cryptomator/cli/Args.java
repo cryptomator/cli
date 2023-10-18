@@ -79,6 +79,11 @@ public class Args {
 				.valueSeparator() //
 				.hasArgs() //
 				.build());
+		OPTIONS.addOption(Option.builder() //
+				.longOpt("version") //
+				.desc("Prints version and exits") //
+				.hasArg(false)
+				.build());
 	}
 
 	private final String bindAddr;
@@ -89,6 +94,7 @@ public class Args {
 	private final Properties vaultPasswordFiles;
 	private final Map<String, PasswordStrategy> passwordStrategies;
 	private final Properties fuseMountPoints;
+	private final boolean hasVersion;
 
 	public Args(CommandLine commandLine) throws ParseException {
 		if (commandLine.hasOption("bind") && commandLine.hasOption("port")) {
@@ -105,6 +111,7 @@ public class Args {
 		this.vaultPasswordFiles = commandLine.getOptionProperties("passwordfile");
 		this.passwordStrategies = new HashMap<>();
 		this.fuseMountPoints = commandLine.getOptionProperties("fusemount");
+		this.hasVersion = commandLine.hasOption("version");
 	}
 
 	public boolean hasValidWebDavConf() {
@@ -161,5 +168,9 @@ public class Args {
 		}
 		Path mountPointPath = Paths.get(mountPoint);
 		return mountPointPath;
+	}
+
+	public boolean hasVersion() {
+		return hasVersion;
 	}
 }
