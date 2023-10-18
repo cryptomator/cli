@@ -75,6 +75,7 @@ public class CryptomatorCli {
 	}
 
 	private static void startup(Args args) throws IOException {
+		LOG.info("Starting Cryptomator CLI {}", Version.IMPLEMENTATION_VERSION);
 		Optional<WebDav> server = initWebDavServer(args);
 		ArrayList<FuseMount> mounts = new ArrayList<>();
 
