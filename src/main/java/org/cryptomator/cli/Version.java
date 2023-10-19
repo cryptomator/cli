@@ -4,8 +4,7 @@ public class Version {
     public static final String IMPLEMENTATION_VERSION = getImplementationVersion();
 
     private static String getImplementationVersion() {
-        return new Version()
-                .getClass()
+        return Version.class
                 .getPackage()
                 .getImplementationVersion();
     }
