@@ -39,6 +39,13 @@ public class CryptomatorCli {
 	public static void main(String[] rawArgs) throws IOException {
 		try {
 			Args args = Args.parse(rawArgs);
+
+			// print version and exit if --version option present.
+			if (args.hasVersion()) {
+				printVersion();
+				return;
+			}
+
 			validate(args);
 			startup(args);
 		} catch (ParseException e) {
@@ -151,5 +158,10 @@ public class CryptomatorCli {
 		} catch (Exception e) {
 			LOG.error("Main thread blocking failed.");
 		}
+	}
+
+	private static void printVersion() {
+		String version = Version.IMPLEMENTATION_VERSION;
+		System.out.println(version);
 	}
 }
