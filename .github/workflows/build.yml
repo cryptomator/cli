@@ -1,7 +1,9 @@
 name: Build
 
 on:
-  [push]
+  push:
+  pull_request_target:
+    types: [labeled]
 
 jobs:
   build:
