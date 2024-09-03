@@ -47,7 +47,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download cryptomator-cli.jar
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: cryptomator-cli-${{ needs.build.outputs.artifactVersion }}.jar
           path: .
