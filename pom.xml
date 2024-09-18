@@ -98,7 +98,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>${maven-compiler.version}</version>
 				<configuration>
-					<release>${java.version}</release>
+					<release>${jdk.version}</release>
 					<showWarnings>true</showWarnings>
 					<annotationProcessorPaths>
 						<path>
