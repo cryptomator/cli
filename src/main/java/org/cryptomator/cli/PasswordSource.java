@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public class PasswordSource {
 
@@ -23,7 +24,7 @@ public class PasswordSource {
     boolean passphraseIpc = false;
 
 
-    char[] readPassphrase() throws IOException {
+    Passphrase readPassphrase() throws IOException {
         if (passphraseStdin) {
             return readPassphraseFromStdin();
         } else if (passphraseEnvironmentVariable != null) {
@@ -32,35 +33,35 @@ public class PasswordSource {
             return readPassphraseFromFile();
         } else {
             //TODO: use ipc
-            return new char[]{};
+            return new Passphrase(new char[]{});
         }
     }
 
-    private char[] readPassphraseFromStdin() {
+    private Passphrase readPassphraseFromStdin() {
         System.out.println("Enter a value for --password:");
         var console = System.console();
         if (console == null) {
             throw new IllegalStateException("No console found to read password from.");
         }
-        return console.readPassword();
+        return new Passphrase(console.readPassword());
     }
 
-    private char[] readPassphraseFromEnvironment() {
+    private Passphrase readPassphraseFromEnvironment() {
         var tmp = System.getenv(passphraseEnvironmentVariable);
         if (tmp == null) {
             throw new ReadingEnvironmentVariableFailedException("Environment variable " + passphraseEnvironmentVariable + " is not defined.");
         }
         char[] result = new char[tmp.length()];
         tmp.getChars(0, tmp.length(), result, 0);
-        return result;
+        return new Passphrase(result);
     }
 
-    private char[] readPassphraseFromFile() throws ReadingFileFailedException {
+    private Passphrase readPassphraseFromFile() throws ReadingFileFailedException {
         try {
             var bytes = Files.readAllBytes(passphraseFile);
             var byteBuffer = ByteBuffer.wrap(bytes);
             var charBuffer = StandardCharsets.UTF_8.decode(byteBuffer);
-            return charBuffer.array();
+            return new Passphrase(charBuffer.array());
         } catch (IOException e) {
             throw new ReadingFileFailedException(e);
         }
@@ -86,6 +87,14 @@ public class PasswordSource {
     static class ReadingEnvironmentVariableFailedException extends PasswordSourceException {
         ReadingEnvironmentVariableFailedException(String msg) {
             super(msg);
+        }
+    }
+
+    record Passphrase(char [] content) implements AutoCloseable {
+
+        @Override
+        public void close() {
+            Arrays.fill(content, (char) 0);
         }
     }
 

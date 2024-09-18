@@ -69,13 +69,10 @@ public class CryptomatorCli implements Callable<Integer> {
     }
 
     private Masterkey loadMasterkey(URI keyId) {
-        try {
-            char[] passphrase = passwordSource.readPassphrase();
+        try (var passphraseContainer = passwordSource.readPassphrase()) {
             Path filePath = pathToVault.resolve("masterkey.cryptomator");
-
-            var masterkey = new MasterkeyFileAccess(PEPPER, csrpg).load(filePath, CharBuffer.wrap(passphrase));
-            Arrays.fill(passphrase, '\u0000');
-            return masterkey;
+            return new MasterkeyFileAccess(PEPPER, csrpg)
+                    .load(filePath, CharBuffer.wrap(passphraseContainer.content()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
