@@ -16,7 +16,6 @@ import java.net.URI;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 
 @Command(name = "cryptomator-cli",
