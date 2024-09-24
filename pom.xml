@@ -172,6 +172,7 @@
                         <arguments>-agentlib:native-image-agent=config-output-dir=${project.basedir}/graalvm-agent</arguments>
                         <argument>--module-path</argument>
                         <modulepath/>
+                        <argument>--enable-native-access=org.cryptomator.jfuse.linux,org.cryptomator.jfuse.win,org.cryptomator.jfuse.mac</argument>
                         <argument>--module</argument>
                         <argument>org.cryptomator.cli/${mainClass}</argument>
                         <argument>--password:stdin</argument>
