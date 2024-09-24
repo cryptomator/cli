@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 public class PasswordSource {
 
-    @CommandLine.Option(names = {"--password"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
+    @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
     boolean passphraseStdin;
 
     @CommandLine.Option(names = "--password:env", description = "Name of the environment variable containing the passphrase")
@@ -38,7 +38,7 @@ public class PasswordSource {
     }
 
     private Passphrase readPassphraseFromStdin() {
-        System.out.println("Enter a value for --password:");
+        System.out.println("Enter the password:");
         var console = System.console();
         if (console == null) {
             throw new IllegalStateException("No console found to read password from.");
