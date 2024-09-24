@@ -2,6 +2,7 @@ package org.cryptomator.cli;
 
 import org.cryptomator.cryptofs.CryptoFileSystemProperties;
 import org.cryptomator.cryptofs.CryptoFileSystemProvider;
+import org.cryptomator.cryptofs.CryptoFileSystemUri;
 import org.cryptomator.cryptolib.api.Masterkey;
 import org.cryptomator.cryptolib.common.MasterkeyFileAccess;
 import org.cryptomator.integrations.mount.UnmountFailedException;
@@ -14,6 +15,7 @@ import picocli.CommandLine.Parameters;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.CharBuffer;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.concurrent.Callable;
@@ -47,7 +49,8 @@ public class CryptomatorCli implements Callable<Integer> {
                 //TODO: shortening Threshold
                 //TODO: maxCleartextname
                 .build();
-        try (var fs = CryptoFileSystemProvider.newFileSystem(pathToVault, fsProps);
+        var uri = CryptoFileSystemUri.create(pathToVault);
+        try (var fs = FileSystems.newFileSystem(uri, fsProps);
              var mount = mountOptions.mount(fs)) {
 
             while (true) {

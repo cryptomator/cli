@@ -1,144 +1,253 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.cryptomator</groupId>
-	<artifactId>cli</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<name>Cryptomator CLI</name>
-	<description>Command line program to access encrypted files via WebDAV.</description>
-	<url>https://github.com/cryptomator/cli</url>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.cryptomator</groupId>
+    <artifactId>cli</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>Cryptomator CLI</name>
+    <description>Command line program to access encrypted files via WebDAV.</description>
+    <url>https://github.com/cryptomator/cli</url>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<jdk.version>22</jdk.version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jdk.version>22</jdk.version>
 
-		<!-- native image options -->
-		<mainClass>org.cryptomator.hubcli.HubCli</mainClass>
-		<native.optimization>-Ob</native.optimization> <!-- default: no optimization/dev build-->
+        <!-- native image options -->
+		<binaryName>cryptomator-cli</binaryName>
+        <mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
 
-		<!-- runtime dependencies -->
-		<cryptofs.version>2.7.0-beta1</cryptofs.version>
-		<webdav-nio.version>2.0.6</webdav-nio.version>
-		<fuse-nio.version>5.0.0</fuse-nio.version>
-		<slf4j.version>2.0.16</slf4j.version>
+        <!-- runtime dependencies -->
+        <cryptofs.version>2.8.0-SNAPSHOT</cryptofs.version>
+        <webdav-nio.version>2.0.6</webdav-nio.version>
+        <fuse-nio.version>5.0.0</fuse-nio.version>
+        <slf4j.version>2.0.16</slf4j.version>
 
-		<!-- build dependencies -->
-		<jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
-		<picocli.version>4.7.6</picocli.version>
+        <!-- build dependencies -->
+        <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
+        <picocli.version>4.7.6</picocli.version>
 
-		<!-- maven plugins -->
-		<maven-compiler.version>3.13.0</maven-compiler.version>
-		<maven-assembly.version>3.7.1</maven-assembly.version>
-	</properties>
+        <!-- maven plugins -->
+        <maven-compiler.version>3.13.0</maven-compiler.version>
+        <maven-jar.version>3.3.0</maven-jar.version>
+        <maven-assembly.version>3.7.1</maven-assembly.version>
+		<graal-native.version>0.10.3</graal-native.version>
+    </properties>
 
-	<licenses>
-		<license>
-			<name>GNU Affero General Public License (AGPL) version 3.0</name>
-			<url>https://www.gnu.org/licenses/agpl.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>GNU Affero General Public License (AGPL) version 3.0</name>
+            <url>https://www.gnu.org/licenses/agpl.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<developers>
-		<developer>
-			<name>Sebastian Stenzel</name>
-			<email>sebastian.stenzel@gmail.com</email>
-			<timezone>+1</timezone>
-			<organization>cryptomator.org</organization>
-			<organizationUrl>http://cryptomator.org</organizationUrl>
-		</developer>
-		<developer>
-			<name>Armin Schrenk</name>
-			<email>armin.schrenk@skymatic.de</email>
-			<timezone>+1</timezone>
-			<organization>Skymatic GmbH</organization>
-			<organizationUrl>https://skymatic.de</organizationUrl>
-		</developer>
-	</developers>
+    <developers>
+        <developer>
+            <name>Sebastian Stenzel</name>
+            <email>sebastian.stenzel@gmail.com</email>
+            <timezone>+1</timezone>
+            <organization>cryptomator.org</organization>
+            <organizationUrl>http://cryptomator.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Armin Schrenk</name>
+            <email>armin.schrenk@skymatic.de</email>
+            <timezone>+1</timezone>
+            <organization>Skymatic GmbH</organization>
+            <organizationUrl>https://skymatic.de</organizationUrl>
+        </developer>
+    </developers>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.cryptomator</groupId>
-			<artifactId>cryptofs</artifactId>
-			<version>${cryptofs.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.cryptomator</groupId>
-			<artifactId>webdav-nio-adapter</artifactId>
-			<version>${webdav-nio.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.cryptomator</groupId>
-			<artifactId>fuse-nio-adapter</artifactId>
-			<version>${fuse-nio.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>org.cryptomator</groupId>
+            <artifactId>cryptofs</artifactId>
+            <version>${cryptofs.version}</version>
+        </dependency>
+        <!--dependency>
+            <groupId>org.cryptomator</groupId>
+            <artifactId>webdav-nio-adapter</artifactId>
+            <version>${webdav-nio.version}</version>
+        </dependency-->
+        <dependency>
+            <groupId>org.cryptomator</groupId>
+            <artifactId>fuse-nio-adapter</artifactId>
+            <version>${fuse-nio.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>info.picocli</groupId>
-			<artifactId>picocli</artifactId>
-			<version>${picocli.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
+        </dependency>
 
-		<!-- Logging -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-	</dependencies>
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+    </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${maven-compiler.version}</version>
-				<configuration>
-					<release>${jdk.version}</release>
-					<showWarnings>true</showWarnings>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>info.picocli</groupId>
-							<artifactId>picocli-codegen</artifactId>
-							<version>${picocli.version}</version>
-						</path>
-					</annotationProcessorPaths>
-					<compilerArgs>
-						<arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
-					</compilerArgs>
-				</configuration>
-			</plugin>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler.version}</version>
+                <configuration>
+                    <release>${jdk.version}</release>
+                    <showWarnings>true</showWarnings>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                            <version>${picocli.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly.version}</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+					<!-- TODO: do we need the preconfigured descriptor "jar-with-dependencies"? -->
+                    <finalName>cryptomator-cli-${project.version}</finalName>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <archive>
+                        <manifestEntries>
+                            <Main-Class>${mainClass}</Main-Class>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>${maven-assembly.version}</version>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<finalName>cryptomator-cli-${project.version}</finalName>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<appendAssemblyId>false</appendAssemblyId>
-					<archive>
-						<manifestEntries>
-							<Main-Class>org.cryptomator.cli.CryptomatorCli</Main-Class>
-							<Implementation-Version>${project.version}</Implementation-Version>
-						</manifestEntries>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graal-native.version}</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>generateResourceConfig</goal>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                            <execution>
+                                <id>test-native</id>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <phase>test</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <buildArgs>
+                                <buildArg>-Ob</buildArg>
+                                <buildArg>-H:+PrintClassInitialization</buildArg>
+                                <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
+                                <buildArg>--initialize-at-build-time=org.cryptomator.cryptofs</buildArg>
+                                <buildArg>--initialize-at-build-time=dagger.internal.DoubleCheck</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.io.BaseEncoding$Alphabet</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.io.BaseEncoding$Base64Encoding</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.io.BaseEncoding$Base16Encoding</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.ImmutableSortedMap</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.ImmutableSortedMap$1EntrySet</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.ImmutableSortedMap$1EntrySet$1</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.RegularImmutableSortedSet</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.RegularImmutableList</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.ImmutableAsList</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.ImmutableSortedAsList</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.collect.NaturalOrdering</buildArg>
+                                <buildArg>--initialize-at-build-time=org.slf4j.jul.JDK14LoggerAdapter</buildArg>
+                                <buildArg>--initialize-at-build-time=com.google.common.base.CharMatcher$IsEither</buildArg>
+                                <buildArg>--initialize-at-build-time=org.cryptomator.cryptolib.api.CryptorProvider$Scheme</buildArg>
+                            </buildArgs>
+                            <imageName>${binaryName}</imageName>
+                            <fallback>false</fallback>
+                            <agent>
+                                <enabled>true</enabled>
+                            </agent>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.4.1</version>
+                        <executions>
+                            <execution>
+                                <id>java-agent</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${env.JAVA_HOME}/bin/java</executable>
+                                    <arguments>
+                                        <argument>--module-path</argument>
+                                        <modulepath/>
+                                        <argument>--module</argument>
+                                        <argument>org.cryptomator.cli/${mainClass}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>native</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${project.build.directory}/${binaryName}</executable>
+                                    <workingDirectory>${project.build.directory}</workingDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
