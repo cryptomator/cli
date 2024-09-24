@@ -212,6 +212,7 @@
                         <configuration>
                             <buildArgs>
                                 <buildArg>-Ob</buildArg>
+                                <buildArg>-H:+ForeignAPISupport</buildArg>
                                 <buildArg>--initialize-at-build-time=org.cryptomator.cryptofs</buildArg>
                                 <buildArg>--initialize-at-build-time=dagger.internal.DoubleCheck</buildArg>
                                 <buildArg>--initialize-at-build-time=com.google.common.io.BaseEncoding$Alphabet</buildArg>
