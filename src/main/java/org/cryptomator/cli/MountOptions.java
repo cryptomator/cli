@@ -22,7 +22,7 @@ public class MountOptions {
         var services = IntegrationsLoader.loadAll(MountService.class).toList();
         var service = services.stream().filter(s -> s.getClass().getName().equals(value)).findFirst();
         if (service.isEmpty()) {
-            var availableServices = services.stream().map(s -> getClass().getName()).collect(Collectors.joining(","));
+            var availableServices = services.stream().map(s -> s.getClass().getName()).collect(Collectors.joining(","));
             var errorMessage = String.format("Invalid value '%s' for option '--mounter': Available mounters are [%s].", value, availableServices);
             throw new CommandLine.ParameterException(spec.commandLine(), errorMessage);
         }
