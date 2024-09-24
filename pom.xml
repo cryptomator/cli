@@ -174,7 +174,9 @@
                         <modulepath/>
                         <argument>--module</argument>
                         <argument>org.cryptomator.cli/${mainClass}</argument>
-                        <argument>--mounter=wawaw</argument>
+                        <argument>--password:stdin</argument>
+                        <argument>--mounter=org.cryptomator.frontend.fuse.mount.WinFspNetworkMountProvider</argument>
+                        <argument>--mountPoint=X:\\</argument>
                         <argument>T:\\vaultFormat8</argument>
                     </arguments>
                 </configuration>
