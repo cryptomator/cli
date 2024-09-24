@@ -3,116 +3,47 @@
 
 # Cryptomator CLI
 
+> [!NOTE]
+> Project is currently on hold due.
+> GraalVM 22 does not [support shared Arenas and Upcall Handlers of the FFI API](https://www.graalvm.org/latest/reference-manual/native-image/native-code-interoperability/foreign-interface/), but these API features are used by jfuse
+> This might get resolved with future GraalVM versions.
+
 This is a minimal command-line application that unlocks vaults of vault format 8.
-After unlocking the vaults, its vault content can be accessed via an embedded WebDAV server.
-The minimum required Java version is JDK 17.
+This project uses [picocli](https://picocli.info/) and [GraalVM](https://www.graalvm.org/) to create a native CLI written in Java.
 
-## Disclaimer
+Requirements:
+* GraalVM JDK 22
+* OS toolchain to compile C code (msvc/gcc/ etc)
+* Maven 3.9.9 (maybe older version work too)
+* **Unreleased Cryptofs version (see below)**
 
-:warning: This project is in an early stage and not ready for production use. We recommend using it only for testing and evaluation purposes.
+The CLI itself is in MVP state:
+* existing vaults can be unlocked
+* passwords can be enterd via stdin, env var or file
+* the desired mounter can be selected and mount options specified
+* the cli unlocks exactly one vault
+* to lock a vault, terminate the process (e.g. CTRL+C)
 
-## Download and Usage
-
-Download the JAR file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
-
-Cryptomator CLI requires that at least JDK 17 is present on your system.
-
-```sh
-java -jar cryptomator-cli-x.y.z.jar \
-    --vault demoVault=/path/to/vault --password demoVault=topSecret \
-    --vault otherVault=/path/to/differentVault --passwordfile otherVault=/path/to/fileWithPassword \
-    --vault thirdVault=/path/to/thirdVault  \
-    --bind 127.0.0.1 --port 8080
-# You can now mount http://localhost:8080/demoVault/
-# The password for the third vault is read from stdin
-# Be aware that passing the password on the command-line typically makes it visible to anyone on your system!
+The native image can be built with
+```
+mvn clean package -Pnative
 ```
 
-## Filesystem Integration
+## Cryptofs Patch
 
-Once the vault is unlocked and the WebDAV server started, you can access the vault by any WebDAV client or directly mounting it in your filesystem.
+In [cryptofs](https://github.com/cryptomator/cryptofs), the filesystem wide SecureRandom instance is initialized in a static block of the provider.
+Since the CryptoFileSystemProvider is initialized at build time (due to the SPI mechanism of Java), the secure random instance would be included there as well with a fixed seed.
+GraalVM blocks compiliation, hence a patch is needed for cryptofs (version 2.7.0).
+To fix this. apply the patch file [./cryptofs_patch.diff](cryptofs_patch.diff) in cryptofs and install it to the local maven repository.
 
-### Windows via Windows Explorer
+## Logging
+Currently, the good ol' JUL is used, due to easy integration with graalvm.
 
-Open the File Explorer, right click on "This PC" and click on the menu item "Map network drive...".
+## Native Image Remarks
+The POM defines an extra profile for native image generation: `native`
+The config is based on the tutorial for the graalvm [maven plugin](https://graalvm.github.io/native-build-tools/0.9.21/maven-plugin-quickstart.html).
 
-1. In the Drive list, select a drive letter. (Any available letter will do.)
-2. In the Folder box, enter the URL logged by the Cryptomator CLI application.
-3. Select Finish.
+The `initialize-at-build-time` arguments were added based on the feedback for the graalvm compiler feedback.
 
-### Linux via davfs2
-
-First, you need to create a mount point for your vault:
-
-```sh
-sudo mkdir /media/your/mounted/folder
-```
-
-Then you can mount the vault:
-
-```sh
-echo | sudo mount -t davfs -o username=,user,gid=1000,uid=1000 http://localhost:8080/demoVault/ /media/your/mounted/folder
-# Replace gid/uid with your gid/uid. The echo is used to skip over the password query from davfs
-```
-
-To unmount the vault, run:
-
-```sh
-sudo umount /media/your/mounted/folder
-```
-
-### macOS via AppleScript
-
-Mount the vault with:
-
-```sh
-osascript -e 'mount volume "http://localhost:8080/demoVault/"'
-```
-
-Unmount the vault with:
-
-```sh
-osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
-```
-
-## Using as a Docker image
-
-### Bridge Network with Port Forwarding
-
-:warning: **WARNING: This approach should only be used to test the containerized approach, not in production.** :warning:
-
-The reason is that with port forwarding, you need to listen on all interfaces. Other devices on the network could also access your WebDAV server and potentially expose your secret files.
-
-Ideally, you would run this in a private Docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
-
-```sh
-docker run --rm -p 8080:8080 \
-    -v /path/to/vault:/vaults/vault \
-    -v /path/to/differentVault:/vaults/differentVault \
-    -v /path/to/fileWithPassword:/passwordFile \
-    cryptomator/cli \
-    --bind 0.0.0.0 --port 8080 \
-    --vault demoVault=/vaults/vault --password demoVault=topSecret \
-    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# You can now mount http://localhost:8080/demoVault/
-```
-
-### Host Network
-
-```sh
-docker run --rm --network=host \
-    -v /path/to/vault:/vaults/vault \
-    -v /path/to/differentVault:/vaults/differentVault \
-    -v /path/to/fileWithPassword:/passwordFile \
-    cryptomator/cli \
-    --bind 127.0.0.1 --port 8080 \
-    --vault demoVault=/vaults/vault --password demoVault=topSecret \
-    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# You can now mount http://localhost:8080/demoVault/
-```
-
-Then you can access the vault using any WebDAV client.
-
-## License
-
-This project is dual-licensed under the AGPLv3 for FOSS projects as well as a commercial license derived from the LGPL for independent software vendors and resellers. If you want to use this library in applications, that are *not* licensed under the AGPL, feel free to contact our [support team](https://cryptomator.org/help/).
+The graalvm metadata can be found in `src/main/resources/META-INF/native-image` and was generated with the maven exec plugin with activated nativeimage-agent.
+To generate new metadata, adjust the agument config in the pom and run `mvn clean compile exec:exec` and copy the generated metadata from `graalvm-agent` to the above dir.

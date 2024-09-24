@@ -1,0 +1,161 @@
+From 4fa13f1df50310daf01347149e6e70f48736710e Mon Sep 17 00:00:00 2001
+From: Armin Schrenk <armin.schrenk@skymatic.de>
+Date: Tue, 24 Sep 2024 12:40:20 +0200
+Subject: [PATCH] Initialize SecureRandom lazy
+
+---
+ .../cryptofs/CryptoFileSystemProvider.java    | 14 ++++----------
+ .../CryptoFileSystemProviderComponent.java    |  3 ---
+ .../cryptofs/CryptoFileSystems.java           | 19 +++++++++++++++----
+ .../cryptofs/CryptoFileSystemsTest.java       |  5 ++---
+ 4 files changed, 21 insertions(+), 20 deletions(-)
+
+diff --git a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProvider.java b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProvider.java
+index 3fffd21..4b069b7 100644
+--- a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProvider.java
++++ b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProvider.java
+@@ -90,15 +90,7 @@ public class CryptoFileSystemProvider extends FileSystemProvider {
+ 	private final CopyOperation copyOperation;
+ 
+ 	public CryptoFileSystemProvider() {
+-		this(DaggerCryptoFileSystemProviderComponent.builder().csprng(strongSecureRandom()).build());
+-	}
+-
+-	private static SecureRandom strongSecureRandom() {
+-		try {
+-			return SecureRandom.getInstanceStrong();
+-		} catch (NoSuchAlgorithmException e) {
+-			throw new IllegalStateException("A strong algorithm must exist in every Java platform.", e);
+-		}
++		this(DaggerCryptoFileSystemProviderComponent.builder().build());
+ 	}
+ 
+ 	/**
+@@ -144,7 +136,7 @@ public class CryptoFileSystemProvider extends FileSystemProvider {
+ 		byte[] rawKey = new byte[0];
+ 		var config = VaultConfig.createNew().cipherCombo(properties.cipherCombo()).shorteningThreshold(properties.shorteningThreshold()).build();
+ 		try (Masterkey key = properties.keyLoader().loadKey(keyId); //
+-			 Cryptor cryptor = CryptorProvider.forScheme(config.getCipherCombo()).provide(key, strongSecureRandom())) {
++			 Cryptor cryptor = CryptorProvider.forScheme(config.getCipherCombo()).provide(key, SecureRandom.getInstanceStrong())) {
+ 			rawKey = key.getEncoded();
+ 			// save vault config:
+ 			Path vaultConfigPath = pathToVault.resolve(properties.vaultConfigFilename());
+@@ -156,6 +148,8 @@ public class CryptoFileSystemProvider extends FileSystemProvider {
+ 			Files.createDirectories(vaultCipherRootPath);
+ 			// create dirId backup:
+ 			DirectoryIdBackup.backupManually(cryptor, new CryptoPathMapper.CiphertextDirectory(Constants.ROOT_DIR_ID, vaultCipherRootPath));
++		} catch (NoSuchAlgorithmException e) {
++			throw new IllegalStateException(e);
+ 		} finally {
+ 			Arrays.fill(rawKey, (byte) 0x00);
+ 		}
+diff --git a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProviderComponent.java b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProviderComponent.java
+index 78d47e4..bbe7f22 100644
+--- a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProviderComponent.java
++++ b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystemProviderComponent.java
+@@ -18,9 +18,6 @@ interface CryptoFileSystemProviderComponent {
+ 
+ 	@Component.Builder
+ 	interface Builder {
+-		@BindsInstance
+-		Builder csprng(SecureRandom csprng);
+-
+ 		CryptoFileSystemProviderComponent build();
+ 	}
+ 
+diff --git a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystems.java b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystems.java
+index e64ab36..df06e65 100644
+--- a/src/main/java/org/cryptomator/cryptofs/CryptoFileSystems.java
++++ b/src/main/java/org/cryptomator/cryptofs/CryptoFileSystems.java
+@@ -19,11 +19,13 @@ import java.nio.file.FileSystemNotFoundException;
+ import java.nio.file.Files;
+ import java.nio.file.NoSuchFileException;
+ import java.nio.file.Path;
++import java.security.NoSuchAlgorithmException;
+ import java.security.SecureRandom;
+ import java.util.EnumSet;
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ConcurrentMap;
++import java.util.concurrent.atomic.AtomicReference;
+ 
+ import static java.lang.String.format;
+ 
+@@ -35,16 +37,21 @@ class CryptoFileSystems {
+ 	private final ConcurrentMap<Path, CryptoFileSystemImpl> fileSystems = new ConcurrentHashMap<>();
+ 	private final CryptoFileSystemComponent.Factory cryptoFileSystemComponentFactory;
+ 	private final FileSystemCapabilityChecker capabilityChecker;
+-	private final SecureRandom csprng;
++	private final AtomicReference<SecureRandom> csprng;
+ 
+ 	@Inject
+-	public CryptoFileSystems(CryptoFileSystemComponent.Factory cryptoFileSystemComponentFactory, FileSystemCapabilityChecker capabilityChecker, SecureRandom csprng) {
++	public CryptoFileSystems(CryptoFileSystemComponent.Factory cryptoFileSystemComponentFactory, FileSystemCapabilityChecker capabilityChecker) {
+ 		this.cryptoFileSystemComponentFactory = cryptoFileSystemComponentFactory;
+ 		this.capabilityChecker = capabilityChecker;
+-		this.csprng = csprng;
++		this.csprng = new AtomicReference<>(null);
+ 	}
+ 
+ 	public CryptoFileSystemImpl create(CryptoFileSystemProvider provider, Path pathToVault, CryptoFileSystemProperties properties) throws IOException, MasterkeyLoadingFailedException {
++		try {
++			initRandom();
++		} catch (NoSuchAlgorithmException e) {
++			throw new FileSystemInitializationFailedException("The provided JVM does not offer a secure random instance", e);
++		}
+ 		Path normalizedPathToVault = pathToVault.normalize();
+ 		var token = readVaultConfigFile(normalizedPathToVault, properties);
+ 
+@@ -54,7 +61,7 @@ class CryptoFileSystems {
+ 			var config = configLoader.verify(key.getEncoded(), Constants.VAULT_VERSION);
+ 			backupVaultConfigFile(normalizedPathToVault, properties);
+ 			var adjustedProperties = adjustForCapabilities(pathToVault, properties);
+-			var cryptor = CryptorProvider.forScheme(config.getCipherCombo()).provide(key.copy(), csprng);
++			var cryptor = CryptorProvider.forScheme(config.getCipherCombo()).provide(key.copy(), csprng.get());;
+ 			try {
+ 				checkVaultRootExistence(pathToVault, cryptor);
+ 				return fileSystems.compute(normalizedPathToVault, (path, fs) -> {
+@@ -71,6 +78,10 @@ class CryptoFileSystems {
+ 		}
+ 	}
+ 
++	private void initRandom() throws NoSuchAlgorithmException {
++		csprng.compareAndSet(null, SecureRandom.getInstanceStrong());
++	}
++
+ 	/**
+ 	 * Checks if the vault has a content root folder. If not, an exception is raised.
+ 	 *
+diff --git a/src/test/java/org/cryptomator/cryptofs/CryptoFileSystemsTest.java b/src/test/java/org/cryptomator/cryptofs/CryptoFileSystemsTest.java
+index df12014..c2fcb18 100644
+--- a/src/test/java/org/cryptomator/cryptofs/CryptoFileSystemsTest.java
++++ b/src/test/java/org/cryptomator/cryptofs/CryptoFileSystemsTest.java
+@@ -53,7 +53,6 @@ public class CryptoFileSystemsTest {
+ 	private final byte[] rawKey = new byte[64];
+ 	private final VaultConfig vaultConfig = mock(VaultConfig.class);
+ 	private final CryptorProvider.Scheme cipherCombo = mock(CryptorProvider.Scheme.class);
+-	private final SecureRandom csprng = Mockito.mock(SecureRandom.class);
+ 	private final CryptorProvider cryptorProvider = mock(CryptorProvider.class);
+ 	private final Cryptor cryptor = mock(Cryptor.class);
+ 	private final FileNameCryptor fileNameCryptor = mock(FileNameCryptor.class);
+@@ -65,7 +64,7 @@ public class CryptoFileSystemsTest {
+ 	private MockedStatic<CryptorProvider> cryptorProviderClass;
+ 	private MockedStatic<BackupHelper> backupHelperClass;
+ 
+-	private final CryptoFileSystems inTest = new CryptoFileSystems(cryptoFileSystemComponentFactory, capabilityChecker, csprng);
++	private final CryptoFileSystems inTest = new CryptoFileSystems(cryptoFileSystemComponentFactory, capabilityChecker);
+ 
+ 	@BeforeEach
+ 	public void setup() throws IOException, MasterkeyLoadingFailedException {
+@@ -88,7 +87,7 @@ public class CryptoFileSystemsTest {
+ 		when(masterkey.getEncoded()).thenReturn(rawKey);
+ 		when(masterkey.copy()).thenReturn(clonedMasterkey);
+ 		when(configLoader.verify(rawKey, Constants.VAULT_VERSION)).thenReturn(vaultConfig);
+-		when(cryptorProvider.provide(clonedMasterkey, csprng)).thenReturn(cryptor);
++		when(cryptorProvider.provide(Mockito.eq(clonedMasterkey), Mockito.any())).thenReturn(cryptor);
+ 		when(vaultConfig.getCipherCombo()).thenReturn(cipherCombo);
+ 		when(cryptor.fileNameCryptor()).thenReturn(fileNameCryptor);
+ 		when(fileNameCryptor.hashDirectoryId("")).thenReturn("ABCDEFGHIJKLMNOP");
+-- 
+2.45.2.windows.1
+
