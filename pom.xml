@@ -13,7 +13,7 @@
 		<jdk.version>22</jdk.version>
 
 		<!-- native image options -->
-		<mainClass>org.cryptomator.hubcli.HubCli</mainClass>
+		<mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
 		<native.optimization>-Ob</native.optimization> <!-- default: no optimization/dev build-->
 
 		<!-- runtime dependencies -->
@@ -28,6 +28,7 @@
 
 		<!-- maven plugins -->
 		<maven-compiler.version>3.13.0</maven-compiler.version>
+		<maven-jar.version>3.3.0</maven-jar.version>
 		<maven-assembly.version>3.7.1</maven-assembly.version>
 	</properties>
 
@@ -112,7 +113,19 @@
 					</compilerArgs>
 				</configuration>
 			</plugin>
-
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>${maven-jar.version}</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>${mainClass}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>${maven-assembly.version}</version>
@@ -133,7 +146,7 @@
 					<appendAssemblyId>false</appendAssemblyId>
 					<archive>
 						<manifestEntries>
-							<Main-Class>org.cryptomator.cli.CryptomatorCli</Main-Class>
+							<Main-Class>${mainClass}</Main-Class>
 							<Implementation-Version>${project.version}</Implementation-Version>
 						</manifestEntries>
 					</archive>
