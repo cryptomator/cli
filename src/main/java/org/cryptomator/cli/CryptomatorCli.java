@@ -49,14 +49,11 @@ public class CryptomatorCli implements Callable<Integer> {
                 .build();
         try (var fs = CryptoFileSystemProvider.newFileSystem(pathToVault, fsProps);
              var mount = mountOptions.mount(fs)) {
-
+            System.out.println(mount.getMountpoint().uri());
             while (true) {
                 int c = System.in.read();
-                if (c == -1) { //END OF STREAM
-                    //TODO: terminate with error?
-                    mount.unmount();
-                    return 1;
-                } else if (c == 0x03) {//Ctrl+C
+                if (c == -1 || c == 0x03 || c == 0x04) {//Ctrl+C, Ctrl+D
+                    LOG.info("Unmounting and locking vault...");
                     mount.unmount();
                     break;
                 }
