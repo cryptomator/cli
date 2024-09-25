@@ -30,6 +30,7 @@
 		<maven-compiler.version>3.13.0</maven-compiler.version>
 		<maven-jar.version>3.3.0</maven-jar.version>
 		<maven-assembly.version>3.7.1</maven-assembly.version>
+		<maven-exec.version>3.4.1</maven-exec.version>
 	</properties>
 
 	<licenses>
@@ -150,6 +151,33 @@
 							<Implementation-Version>${project.version}</Implementation-Version>
 						</manifestEntries>
 					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${maven-exec.version}</version>
+				<executions>
+					<execution>
+						<id>test-run</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>${env.JAVA_HOME}/bin/java</executable>
+					<arguments>
+						<argument>--module-path</argument>
+						<modulepath/>
+						<argument>--enable-native-access=org.cryptomator.jfuse.linux,org.cryptomator.jfuse.win,org.cryptomator.jfuse.mac</argument>
+						<argument>--module</argument>
+						<argument>org.cryptomator.cli/${mainClass}</argument>
+						<argument>--password:stdin</argument>
+						<argument>--mounter=org.cryptomator.frontend.fuse.mount.WinFspNetworkMountProvider</argument>
+						<argument>--mountPoint=X:\\</argument>
+						<argument>T:\\vaultFormat8</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
