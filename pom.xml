@@ -30,7 +30,7 @@
 		<!-- maven plugins -->
 		<maven-compiler.version>3.13.0</maven-compiler.version>
 		<maven-jar.version>3.3.0</maven-jar.version>
-		<maven-assembly.version>3.7.1</maven-assembly.version>
+		<maven-shade.version>3.6.0</maven-shade.version>
 		<maven-exec.version>3.4.1</maven-exec.version>
 	</properties>
 
@@ -103,7 +103,6 @@
 			<artifactId>jansi</artifactId>
 			<version>2.4.1</version>
 		</dependency>
-
 	</dependencies>
 
 	<build>
@@ -140,30 +139,30 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>${maven-assembly.version}</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>${maven-shade.version}</version>
 				<executions>
 					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
 						<goals>
-							<goal>single</goal>
+							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>${mainClass}</mainClass>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.cryptomator.integrations.mount.MountService</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.cryptomator.jfuse.api.FuseBuilder</resource>
+								</transformer>
+							</transformers>
+						</configuration>
 					</execution>
 				</executions>
-				<configuration>
-					<finalName>cryptomator-cli-${project.version}</finalName>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<appendAssemblyId>false</appendAssemblyId>
-					<archive>
-						<manifestEntries>
-							<Main-Class>${mainClass}</Main-Class>
-							<Implementation-Version>${project.version}</Implementation-Version>
-						</manifestEntries>
-					</archive>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
