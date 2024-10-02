@@ -159,6 +159,9 @@
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/services/org.cryptomator.jfuse.api.FuseBuilder</resource>
 								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/ch.qos.logback.classic.spi.Configurator</resource>
+								</transformer>
 							</transformers>
 						</configuration>
 					</execution>

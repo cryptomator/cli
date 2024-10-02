@@ -2,17 +2,18 @@ package org.cryptomator.cli;
 
 import org.cryptomator.integrations.common.IntegrationsLoader;
 import org.cryptomator.integrations.mount.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MountOptions {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MountOptions.class);
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -48,26 +49,56 @@ public class MountOptions {
     @CommandLine.Option(names = {"--loopbackPort"}, description = "Port used at the loopback address.")
     Optional<Integer> loopbackPort;
 
+
     MountBuilder prepareMountBuilder(FileSystem fs) {
+        var specifiedOptions = filterNotSpecifiedOptions();
         var builder = mountService.forFileSystem(fs.getPath("/"));
         for (var capability : mountService.capabilities()) {
             switch (capability) {
                 case FILE_SYSTEM_NAME -> builder.setFileSystemName("cryptoFs");
-                case LOOPBACK_PORT -> loopbackPort.ifPresent(builder::setLoopbackPort);
-                case LOOPBACK_HOST_NAME -> loopbackHostName.ifPresent(builder::setLoopbackHostName);
+                case LOOPBACK_PORT -> {
+                    loopbackPort.ifPresent(builder::setLoopbackPort);
+                    specifiedOptions.put("loopbackPort", false);
+                }
+                case LOOPBACK_HOST_NAME -> {
+                    loopbackHostName.ifPresent(builder::setLoopbackHostName);
+                    specifiedOptions.put("loopbackHostname", false);
+                }
                 //TODO: case READ_ONLY -> builder.setReadOnly(vaultSettings.usesReadOnlyMode.get());
                 case MOUNT_FLAGS -> {
+                    specifiedOptions.put("mountOptions", false);
                     if (mountOptions.isEmpty()) {
-                        builder.setMountFlags(mountService.getDefaultMountFlags());
+                        var defaultFlags = mountService.getDefaultMountFlags();
+                        LOG.debug("Using default mount options {}", defaultFlags);
+                        builder.setMountFlags(defaultFlags);
                     } else {
                         builder.setMountFlags(String.join(" ", mountOptions));
                     }
                 }
-                case VOLUME_ID -> builder.setVolumeId(volumeId);
-                case VOLUME_NAME -> volumeName.ifPresent(builder::setVolumeName);
+                case VOLUME_ID -> {
+                    builder.setVolumeId(volumeId);
+                }
+                case VOLUME_NAME -> {
+                    volumeName.ifPresent(builder::setVolumeName);
+                    specifiedOptions.put("volumeName", false);
+                }
             }
         }
+
+        var ignoredOptions = specifiedOptions.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.joining(","));
+        LOG.info("Ignoring unsupported options: {}", ignoredOptions);
         return builder;
+    }
+
+    private Map<String, Boolean> filterNotSpecifiedOptions() {
+        var map = new HashMap<String, Boolean>();
+        loopbackPort.ifPresent(_ -> map.put("loopbackPort", true));
+        loopbackHostName.ifPresent(_ -> map.put("loopbackHostname", true));
+        volumeName.ifPresent(_ -> map.put("volumeName", true));
+        if (!mountOptions.isEmpty()) {
+            map.put("mountOption", true);
+        }
+        return map;
     }
 
     Mount mount(FileSystem fs) throws MountFailedException {
@@ -76,6 +107,7 @@ public class MountOptions {
         }
         var builder = prepareMountBuilder(fs);
         mountPoint.ifPresent(builder::setMountpoint);
+        LOG.debug("Mounting vault using {} to {}.", mountService.displayName(), mountPoint.isPresent() ? mountPoint.get() : "system chosen location");
         return builder.mount();
     }
 }

@@ -37,6 +37,9 @@ public class CryptomatorCli implements Callable<Integer> {
     @Parameters(index = "0", paramLabel = "/path/to/vaultDirectory", description = "Path to the vault directory")
     Path pathToVault;
 
+    @CommandLine.Option(names = {"--verbose"}, description = "Use verbose logging.")
+    boolean verbose = false;
+
     @CommandLine.ArgGroup(multiplicity = "1")
     PasswordSource passwordSource;
 
@@ -59,6 +62,15 @@ public class CryptomatorCli implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (verbose) {
+            var logConfigurator = LogbackConfigurator.INSTANCE.get();
+            if (logConfigurator != null) {
+                logConfigurator.setLogLevels(LogbackConfigurator.DEBUG_LOG_LEVELS);
+                LOG.debug("User verbose logging");
+            } else {
+                throw new IllegalStateException("Logging is not configured.");
+            }
+        }
         csrpg = SecureRandom.getInstanceStrong();
 
         var unverifiedConfig = readConfigFromStorage(pathToVault);
@@ -103,6 +115,7 @@ public class CryptomatorCli implements Callable<Integer> {
      */
     static VaultConfig.UnverifiedVaultConfig readConfigFromStorage(Path vaultPath) throws IOException {
         Path configPath = vaultPath.resolve(CONFIG_FILE_NAME);
+        LOG.debug("Reading vault config from file {}.", configPath);
         String token = Files.readString(configPath, StandardCharsets.US_ASCII);
         return VaultConfig.decode(token);
     }

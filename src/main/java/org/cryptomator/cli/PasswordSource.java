@@ -1,5 +1,7 @@
 package org.cryptomator.cli;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -10,6 +12,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public class PasswordSource {
+
+    public static final Logger LOG = LoggerFactory.getLogger(PasswordSource.class);
 
     @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
     boolean passphraseStdin;
@@ -38,6 +42,7 @@ public class PasswordSource {
     }
 
     private Passphrase readPassphraseFromStdin() {
+        LOG.debug("Reading passphrase from STDIN");
         System.out.println("Enter the password:");
         var console = System.console();
         if (console == null) {
@@ -47,6 +52,7 @@ public class PasswordSource {
     }
 
     private Passphrase readPassphraseFromEnvironment() {
+        LOG.debug("Reading passphrase from env variable '{}'", passphraseEnvironmentVariable);
         var tmp = System.getenv(passphraseEnvironmentVariable);
         if (tmp == null) {
             throw new ReadingEnvironmentVariableFailedException("Environment variable " + passphraseEnvironmentVariable + " is not defined.");
@@ -57,6 +63,7 @@ public class PasswordSource {
     }
 
     private Passphrase readPassphraseFromFile() throws ReadingFileFailedException {
+        LOG.debug("Reading passphrase from file '{}'", passphraseFile);
         try {
             var bytes = Files.readAllBytes(passphraseFile);
             var byteBuffer = ByteBuffer.wrap(bytes);
@@ -90,7 +97,7 @@ public class PasswordSource {
         }
     }
 
-    record Passphrase(char [] content) implements AutoCloseable {
+    record Passphrase(char[] content) implements AutoCloseable {
 
         @Override
         public void close() {
