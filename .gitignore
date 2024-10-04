@@ -19,3 +19,6 @@ out/
 *.iws
 
 *.iml
+
+#mvn shade plugin artifact
+dependency-reduced-pom.xml
