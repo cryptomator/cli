@@ -86,7 +86,9 @@ public class MountOptions {
         }
 
         var ignoredOptions = specifiedOptions.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.joining(","));
-        LOG.info("Ignoring unsupported options: {}", ignoredOptions);
+        if(!ignoredOptions.isEmpty()) {
+            LOG.info("Ignoring unsupported options: {}", ignoredOptions);
+        }
         return builder;
     }
 

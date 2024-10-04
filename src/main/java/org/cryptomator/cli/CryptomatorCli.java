@@ -86,6 +86,7 @@ public class CryptomatorCli implements Callable<Integer> {
             System.out.println(mount.getMountpoint().uri());
             while (true) {
                 int c = System.in.read();
+                //TODO: Password piping is currently not supported due to read() returing -1
                 if (c == -1 || c == 0x03 || c == 0x04) {//Ctrl+C, Ctrl+D
                     LOG.info("Unmounting and locking vault...");
                     mount.unmount();
@@ -93,7 +94,7 @@ public class CryptomatorCli implements Callable<Integer> {
                 }
             }
         } catch (UnmountFailedException e) {
-            LOG.error("Regular unmount failed. Just terminating...", e);
+            LOG.error("Regular unmount failed. Just terminating process...", e);
         }
         return 0;
     }
