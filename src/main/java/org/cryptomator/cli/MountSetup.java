@@ -11,9 +11,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MountOptions {
+public class MountSetup {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MountOptions.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MountSetup.class);
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -41,7 +41,7 @@ public class MountOptions {
     @CommandLine.Option(names = {"--volumeId"}, description = "Id of the virtual volume.")
     String volumeId = UUID.randomUUID().toString();
 
-    @CommandLine.Option(names = {"--mountOption", "-mop"}, description = "Additional mount option. For a list of mountoptions, see the WinFsp, macFUSE, FUSE-T and libfuse documentation.")
+    @CommandLine.Option(names = {"--mountOption", "-mop"}, description = "Additional mount option. For a list of mount options, see the WinFsp, macFUSE, FUSE-T and libfuse documentation.")
     List<String> mountOptions = new ArrayList<>();
 
     @CommandLine.Option(names = {"--loopbackHostName"}, description = "Name of the loopback address.")
@@ -51,22 +51,22 @@ public class MountOptions {
 
 
     MountBuilder prepareMountBuilder(FileSystem fs) {
-        var specifiedOptions = filterNotSpecifiedOptions();
+        var specifiedMOPs = listSpecifiedSpecifiedMountOptions();
         var builder = mountService.forFileSystem(fs.getPath("/"));
         for (var capability : mountService.capabilities()) {
             switch (capability) {
                 case FILE_SYSTEM_NAME -> builder.setFileSystemName("cryptoFs");
                 case LOOPBACK_PORT -> {
                     loopbackPort.ifPresent(builder::setLoopbackPort);
-                    specifiedOptions.put("loopbackPort", false);
+                    specifiedMOPs.put("loopbackPort", false);
                 }
                 case LOOPBACK_HOST_NAME -> {
                     loopbackHostName.ifPresent(builder::setLoopbackHostName);
-                    specifiedOptions.put("loopbackHostname", false);
+                    specifiedMOPs.put("loopbackHostname", false);
                 }
                 //TODO: case READ_ONLY -> builder.setReadOnly(vaultSettings.usesReadOnlyMode.get());
                 case MOUNT_FLAGS -> {
-                    specifiedOptions.put("mountOptions", false);
+                    specifiedMOPs.put("mountOptions", false);
                     if (mountOptions.isEmpty()) {
                         var defaultFlags = mountService.getDefaultMountFlags();
                         LOG.debug("Using default mount options {}", defaultFlags);
@@ -80,19 +80,19 @@ public class MountOptions {
                 }
                 case VOLUME_NAME -> {
                     volumeName.ifPresent(builder::setVolumeName);
-                    specifiedOptions.put("volumeName", false);
+                    specifiedMOPs.put("volumeName", false);
                 }
             }
         }
 
-        var ignoredOptions = specifiedOptions.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.joining(","));
-        if(!ignoredOptions.isEmpty()) {
-            LOG.info("Ignoring unsupported options: {}", ignoredOptions);
+        var ignoredMOPs = specifiedMOPs.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.joining(","));
+        if(!ignoredMOPs.isEmpty()) {
+            LOG.info("Ignoring unsupported options: {}", ignoredMOPs);
         }
         return builder;
     }
 
-    private Map<String, Boolean> filterNotSpecifiedOptions() {
+    private Map<String, Boolean> listSpecifiedSpecifiedMountOptions() {
         var map = new HashMap<String, Boolean>();
         loopbackPort.ifPresent(_ -> map.put("loopbackPort", true));
         loopbackHostName.ifPresent(_ -> map.put("loopbackHostname", true));

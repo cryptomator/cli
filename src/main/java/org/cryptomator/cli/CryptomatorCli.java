@@ -44,7 +44,7 @@ public class CryptomatorCli implements Callable<Integer> {
     PasswordSource passwordSource;
 
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "1")
-    MountOptions mountOptions;
+    MountSetup mountSetup;
 
     @CommandLine.Option(names = {"--maxCleartextNameLength"}, description = "Maximum cleartext filename length limit of created files. Remark: If this limit is greater than the shortening threshold, it does not have any effect.")
     void setMaxCleartextNameLength(int input) {
@@ -58,7 +58,7 @@ public class CryptomatorCli implements Callable<Integer> {
 
     private int maxCleartextNameLength = 0;
 
-    private SecureRandom csrpg = null;
+    private SecureRandom csprng = null;
 
     @Override
     public Integer call() throws Exception {
@@ -71,7 +71,7 @@ public class CryptomatorCli implements Callable<Integer> {
                 throw new IllegalStateException("Logging is not configured.");
             }
         }
-        csrpg = SecureRandom.getInstanceStrong();
+        csprng = SecureRandom.getInstanceStrong();
 
         var unverifiedConfig = readConfigFromStorage(pathToVault);
         var fsPropsBuilder = CryptoFileSystemProperties.cryptoFileSystemProperties() //
@@ -82,7 +82,7 @@ public class CryptomatorCli implements Callable<Integer> {
         }
 
         try (var fs = CryptoFileSystemProvider.newFileSystem(pathToVault, fsPropsBuilder.build());
-             var mount = mountOptions.mount(fs)) {
+             var mount = mountSetup.mount(fs)) {
             System.out.println(mount.getMountpoint().uri());
             while (true) {
                 int c = System.in.read();
@@ -102,7 +102,7 @@ public class CryptomatorCli implements Callable<Integer> {
     private Masterkey loadMasterkey(URI keyId) {
         try (var passphraseContainer = passwordSource.readPassphrase()) {
             Path filePath = pathToVault.resolve("masterkey.cryptomator");
-            return new MasterkeyFileAccess(PEPPER, csrpg)
+            return new MasterkeyFileAccess(PEPPER, csprng)
                     .load(filePath, CharBuffer.wrap(passphraseContainer.content()));
         } catch (IOException e) {
             throw new RuntimeException(e);

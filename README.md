@@ -26,7 +26,7 @@ java --enable-native-access="ALL-UNNAMED" -jar cryptomator-cli-x.y.z.jar --help
 
 ## Block Filesystem Integration 
 
-Depending on the chosen mounter, you the vault is automatically integrated into the os.
+Depending on the chosen mounter, the vault is automatically integrated into the os.
 If you don't want a direct integration, choose `org.cryptomator.frontend.webdav.mount.FallbackMounter` for `--mounter`.
 It starts a local WebDAV server started, where you can access the vault by any WebDAV client or mounting it into your filesystem manually.
 

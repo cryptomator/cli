@@ -20,12 +20,14 @@ public class LogbackConfigurator extends ContextAwareBase implements Configurato
 
     static final Map<String, Level> DEFAULT_LOG_LEVELS = Map.of( //
             Logger.ROOT_LOGGER_NAME, Level.INFO, //
-            "org.cryptomator", Level.INFO //
+            "org.cryptomator", Level.INFO, //
+            "org.cryptomator.frontend.fuse.locks", Level.OFF
     );
 
     public static final Map<String, Level> DEBUG_LOG_LEVELS = Map.of( //
             Logger.ROOT_LOGGER_NAME, Level.DEBUG, //
-            "org.cryptomator", Level.TRACE //
+            "org.cryptomator", Level.TRACE, //
+            "org.cryptomator.frontend.fuse.locks", Level.OFF
     );
 
     @Override
@@ -50,10 +52,6 @@ public class LogbackConfigurator extends ContextAwareBase implements Configurato
             logger.addAppender(stdout);
         }
 
-        //disable fuselocking messages
-        Logger fuseLocking = context.getLogger("org.cryptomator.frontend.fuse.locks");
-        fuseLocking.setLevel(Level.OFF);
-
         //make instance accessible
         INSTANCE.compareAndSet(null, this);
         return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY;
@@ -68,7 +66,6 @@ public class LogbackConfigurator extends ContextAwareBase implements Configurato
         if (context instanceof LoggerContext lc) {
             for (var loglevel : logLevels.entrySet()) {
                 Logger logger = lc.getLogger(loglevel.getKey());
-                System.out.println(logger.getName());
                 logger.setLevel(loglevel.getValue());
             }
         }
