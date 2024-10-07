@@ -6,6 +6,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +15,7 @@ import java.util.Arrays;
 public class PasswordSource {
 
     public static final Logger LOG = LoggerFactory.getLogger(PasswordSource.class);
-    private static final int MAX_PASSPHRASE_FILE_SIZE = 10_000; //10KB
+    private static final int MAX_PASSPHRASE_FILE_SIZE = 5_000; //5KB
 
     @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
     boolean passphraseStdin;
@@ -22,7 +23,7 @@ public class PasswordSource {
     @CommandLine.Option(names = "--password:env", description = "Name of the environment variable containing the passphrase")
     String passphraseEnvironmentVariable = null;
 
-    @CommandLine.Option(names = "--password:file", description = "Path of the file containing the passphrase")
+    @CommandLine.Option(names = "--password:file", description = "Path of the file containing the passphrase. The password file must be utf-8 encoded and must not end with a new line")
     Path passphraseFile = null;
 
     Passphrase readPassphrase() throws IOException {
@@ -58,17 +59,27 @@ public class PasswordSource {
     }
 
     private Passphrase readPassphraseFromFile() throws ReadingFileFailedException {
-        LOG.debug("Reading passphrase from file '{}'", passphraseFile);
+        LOG.debug("Reading passphrase from file '{}'.", passphraseFile);
+        byte[] fileContent = null;
+        CharBuffer charWrapper = null;
         try {
-            if(Files.size(passphraseFile) > MAX_PASSPHRASE_FILE_SIZE){
+            if (Files.size(passphraseFile) > MAX_PASSPHRASE_FILE_SIZE) {
                 throw new ReadingFileFailedException("Password file is too big. Max supported size is " + MAX_PASSPHRASE_FILE_SIZE + " bytes.");
             }
-            var bytes = Files.readAllBytes(passphraseFile);
-            var byteBuffer = ByteBuffer.wrap(bytes);
-            var charBuffer = StandardCharsets.UTF_8.decode(byteBuffer);
-            return new Passphrase(charBuffer.array());
+            fileContent = Files.readAllBytes(passphraseFile);
+            charWrapper = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(fileContent));
+            char[] content = new char[charWrapper.limit()];
+            charWrapper.get(content);
+            return new Passphrase(content);
         } catch (IOException e) {
             throw new ReadingFileFailedException(e);
+        } finally {
+            if (fileContent != null) {
+                Arrays.fill(fileContent, (byte) 0);
+            }
+            if (charWrapper != null) {
+                Arrays.fill(charWrapper.array(), (char) 0x00);
+            }
         }
     }
 
