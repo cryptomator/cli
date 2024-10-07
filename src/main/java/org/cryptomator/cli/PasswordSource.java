@@ -24,10 +24,6 @@ public class PasswordSource {
     @CommandLine.Option(names = "--password:file", description = "Path of the file containing the passphrase")
     Path passphraseFile = null;
 
-    @CommandLine.Option(names = "--password:ipc", hidden = true, description = "Used by Cryptomator GUI")
-    boolean passphraseIpc = false;
-
-
     Passphrase readPassphrase() throws IOException {
         if (passphraseStdin) {
             return readPassphraseFromStdin();
@@ -35,10 +31,8 @@ public class PasswordSource {
             return readPassphraseFromEnvironment();
         } else if (passphraseFile != null) {
             return readPassphraseFromFile();
-        } else {
-            //TODO: use ipc
-            return new Passphrase(new char[]{});
         }
+        throw new IllegalStateException("Passphrase location not specified, but required.");
     }
 
     private Passphrase readPassphraseFromStdin() {
