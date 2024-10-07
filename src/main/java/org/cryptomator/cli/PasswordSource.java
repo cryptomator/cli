@@ -14,6 +14,7 @@ import java.util.Arrays;
 public class PasswordSource {
 
     public static final Logger LOG = LoggerFactory.getLogger(PasswordSource.class);
+    private static final int MAX_PASSPHRASE_FILE_SIZE = 10_000; //10KB
 
     @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
     boolean passphraseStdin;
@@ -59,6 +60,9 @@ public class PasswordSource {
     private Passphrase readPassphraseFromFile() throws ReadingFileFailedException {
         LOG.debug("Reading passphrase from file '{}'", passphraseFile);
         try {
+            if(Files.size(passphraseFile) > MAX_PASSPHRASE_FILE_SIZE){
+                throw new ReadingFileFailedException("Password file is too big. Max supported size is " + MAX_PASSPHRASE_FILE_SIZE + " bytes.");
+            }
             var bytes = Files.readAllBytes(passphraseFile);
             var byteBuffer = ByteBuffer.wrap(bytes);
             var charBuffer = StandardCharsets.UTF_8.decode(byteBuffer);
@@ -82,6 +86,10 @@ public class PasswordSource {
         ReadingFileFailedException(Throwable e) {
             super(e);
 
+        }
+
+        public ReadingFileFailedException(String s) {
+            super(s);
         }
     }
 
