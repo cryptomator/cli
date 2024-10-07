@@ -34,7 +34,7 @@ public class PasswordSource {
         } else if (passphraseFile != null) {
             return readPassphraseFromFile();
         }
-        throw new IllegalStateException("Passphrase location not specified, but required.");
+        throw new IllegalStateException("Passphrase source not specified, but required.");
     }
 
     private Passphrase readPassphraseFromStdin() {

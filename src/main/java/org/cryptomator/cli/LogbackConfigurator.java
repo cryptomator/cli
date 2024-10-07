@@ -18,13 +18,13 @@ public class LogbackConfigurator extends ContextAwareBase implements Configurato
 
     public static final AtomicReference<LogbackConfigurator> INSTANCE = new AtomicReference<>();
 
-    static final Map<String, Level> DEFAULT_LOG_LEVELS = Map.of( //
+    private static final Map<String, Level> DEFAULT_LOG_LEVELS = Map.of( //
             Logger.ROOT_LOGGER_NAME, Level.INFO, //
             "org.cryptomator", Level.INFO, //
             "org.cryptomator.frontend.fuse.locks", Level.OFF
     );
 
-    public static final Map<String, Level> DEBUG_LOG_LEVELS = Map.of( //
+    private static final Map<String, Level> DEBUG_LOG_LEVELS = Map.of( //
             Logger.ROOT_LOGGER_NAME, Level.DEBUG, //
             "org.cryptomator", Level.TRACE, //
             "org.cryptomator.frontend.fuse.locks", Level.OFF
@@ -57,12 +57,16 @@ public class LogbackConfigurator extends ContextAwareBase implements Configurato
         return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY;
     }
 
+    void switchToDebug() {
+        setLogLevels(DEBUG_LOG_LEVELS);
+    }
+
     /**
      * Adjust the log levels
      *
      * @param logLevels new log levels to use
      */
-    public void setLogLevels(Map<String, Level> logLevels) {
+    private void setLogLevels(Map<String, Level> logLevels) {
         if (context instanceof LoggerContext lc) {
             for (var loglevel : logLevels.entrySet()) {
                 Logger logger = lc.getLogger(loglevel.getKey());

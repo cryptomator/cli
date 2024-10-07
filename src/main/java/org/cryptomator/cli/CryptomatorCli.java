@@ -63,13 +63,7 @@ public class CryptomatorCli implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         if (verbose) {
-            var logConfigurator = LogbackConfigurator.INSTANCE.get();
-            if (logConfigurator != null) {
-                logConfigurator.setLogLevels(LogbackConfigurator.DEBUG_LOG_LEVELS);
-                LOG.debug("User verbose logging");
-            } else {
-                throw new IllegalStateException("Logging is not configured.");
-            }
+            activateVerboseMode();
         }
         csprng = SecureRandom.getInstanceStrong();
 
@@ -97,6 +91,15 @@ public class CryptomatorCli implements Callable<Integer> {
             LOG.error("Regular unmount failed. Just terminating process...", e);
         }
         return 0;
+    }
+
+    private void activateVerboseMode() {
+        var logConfigurator = LogbackConfigurator.INSTANCE.get();
+        if (logConfigurator == null) {
+            throw new IllegalStateException("Logging is not configured.");
+        }
+        logConfigurator.switchToDebug();
+        LOG.debug("Activated debug logging");
     }
 
     private Masterkey loadMasterkey(URI keyId) {
