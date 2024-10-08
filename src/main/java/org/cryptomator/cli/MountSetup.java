@@ -51,7 +51,7 @@ public class MountSetup {
 
 
     MountBuilder prepareMountBuilder(FileSystem fs) {
-        var specifiedMOPs = listSpecifiedSpecifiedMountOptions();
+        var specifiedMOPs = listSpecifiedMountOptions();
         var builder = mountService.forFileSystem(fs.getPath("/"));
         for (var capability : mountService.capabilities()) {
             switch (capability) {
@@ -62,7 +62,7 @@ public class MountSetup {
                 }
                 case LOOPBACK_HOST_NAME -> {
                     loopbackHostName.ifPresent(builder::setLoopbackHostName);
-                    specifiedMOPs.put("loopbackHostname", false);
+                    specifiedMOPs.put("loopbackHostName", false);
                 }
                 //TODO: case READ_ONLY -> builder.setReadOnly(vaultSettings.usesReadOnlyMode.get());
                 case MOUNT_FLAGS -> {
@@ -92,10 +92,10 @@ public class MountSetup {
         return builder;
     }
 
-    private Map<String, Boolean> listSpecifiedSpecifiedMountOptions() {
+    private Map<String, Boolean> listSpecifiedMountOptions() {
         var map = new HashMap<String, Boolean>();
         loopbackPort.ifPresent(_ -> map.put("loopbackPort", true));
-        loopbackHostName.ifPresent(_ -> map.put("loopbackHostname", true));
+        loopbackHostName.ifPresent(_ -> map.put("loopbackHostName", true));
         volumeName.ifPresent(_ -> map.put("volumeName", true));
         if (!mountOptions.isEmpty()) {
             map.put("mountOption", true);
