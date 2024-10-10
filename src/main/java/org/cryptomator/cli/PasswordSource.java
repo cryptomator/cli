@@ -17,8 +17,9 @@ public class PasswordSource {
     public static final Logger LOG = LoggerFactory.getLogger(PasswordSource.class);
     private static final int MAX_PASSPHRASE_FILE_SIZE = 5_000; //5KB
 
-    @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN")
-    boolean passphraseStdin;
+    //TODO: is the colon ":" a reserved char in Linux?
+    @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN", interactive = true)
+    char[] passphraseStdin = null;
 
     @CommandLine.Option(names = "--password:env", description = "Name of the environment variable containing the passphrase")
     String passphraseEnvironmentVariable = null;
@@ -27,24 +28,14 @@ public class PasswordSource {
     Path passphraseFile = null;
 
     Passphrase readPassphrase() throws IOException {
-        if (passphraseStdin) {
-            return readPassphraseFromStdin();
+        if (passphraseStdin != null) {
+            return new Passphrase(passphraseStdin); //readPassphraseFromStdin();
         } else if (passphraseEnvironmentVariable != null) {
             return readPassphraseFromEnvironment();
         } else if (passphraseFile != null) {
             return readPassphraseFromFile();
         }
         throw new IllegalStateException("Passphrase source not specified, but required.");
-    }
-
-    private Passphrase readPassphraseFromStdin() {
-        LOG.debug("Reading passphrase from STDIN");
-        System.out.println("Enter the password:");
-        var console = System.console();
-        if (console == null) {
-            throw new IllegalStateException("No console found to read password from.");
-        }
-        return new Passphrase(console.readPassword());
     }
 
     private Passphrase readPassphraseFromEnvironment() {
