@@ -17,7 +17,6 @@ public class PasswordSource {
     public static final Logger LOG = LoggerFactory.getLogger(PasswordSource.class);
     private static final int MAX_PASSPHRASE_FILE_SIZE = 5_000; //5KB
 
-    //TODO: is the colon ":" a reserved char in Linux?
     @CommandLine.Option(names = {"--password:stdin"}, paramLabel = "Passphrase", description = "Passphrase, read from STDIN", interactive = true)
     char[] passphraseStdin = null;
 
