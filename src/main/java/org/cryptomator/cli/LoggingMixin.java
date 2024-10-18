@@ -4,13 +4,12 @@ import picocli.CommandLine.Spec;
 import picocli.CommandLine.Model;
 import picocli.CommandLine.Option;
 
-public class LogginMixin {
+public class LoggingMixin {
 
     @Spec(Spec.Target.MIXEE)
     private Model.CommandSpec mixee;
 
     boolean isVerbose;
-
 
     /**
      * Sets a verbose logging leven on the LoggingMixin of the top-level command.
@@ -24,6 +23,6 @@ public class LogginMixin {
         // We want to store the verbosity value in a single, central place,
         // so we find the top-level command,
         // and store the verbosity level on our top-level command's LoggingMixin.
-        ((CryptomatorCli) mixee.root().userObject()).logginMixin.isVerbose = true;
+        ((CryptomatorCli) mixee.root().userObject()).loggingMixin.isVerbose = true;
     }
 }
