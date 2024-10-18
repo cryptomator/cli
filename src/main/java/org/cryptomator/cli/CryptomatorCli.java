@@ -9,8 +9,7 @@ import org.cryptomator.integrations.mount.UnmountFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,22 +30,21 @@ public class CryptomatorCli implements Callable<Integer> {
     private static final byte[] PEPPER = new byte[0];
     private static final String CONFIG_FILE_NAME = "vault.cryptomator";
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
+    @Spec
+    Model.CommandSpec spec;
+    @Mixin
+    LogginMixin logginMixin;
 
     @Parameters(index = "0", paramLabel = "/path/to/vaultDirectory", description = "Path to the vault directory")
     Path pathToVault;
 
-    @CommandLine.Option(names = {"--verbose"}, description = "Use verbose logging.")
-    boolean verbose = false;
-
-    @CommandLine.ArgGroup(multiplicity = "1")
+    @ArgGroup(multiplicity = "1")
     PasswordSource passwordSource;
 
-    @CommandLine.ArgGroup(exclusive = false, multiplicity = "1")
+    @ArgGroup(exclusive = false, multiplicity = "1")
     MountSetup mountSetup;
 
-    @CommandLine.Option(names = {"--maxCleartextNameLength"}, description = "Maximum cleartext filename length limit of created files. Remark: If this limit is greater than the shortening threshold, it does not have any effect.")
+    @Option(names = {"--maxCleartextNameLength"}, description = "Maximum cleartext filename length limit of created files. Remark: If this limit is greater than the shortening threshold, it does not have any effect.")
     void setMaxCleartextNameLength(int input) {
         if (input <= 0) {
             throw new CommandLine.ParameterException(spec.commandLine(),
@@ -62,9 +60,6 @@ public class CryptomatorCli implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (verbose) {
-            activateVerboseMode();
-        }
         csprng = SecureRandom.getInstanceStrong();
 
         var unverifiedConfig = readConfigFromStorage(pathToVault);
@@ -93,15 +88,6 @@ public class CryptomatorCli implements Callable<Integer> {
         return 0;
     }
 
-    private void activateVerboseMode() {
-        var logConfigurator = LogbackConfigurator.INSTANCE.get();
-        if (logConfigurator == null) {
-            throw new IllegalStateException("Logging is not configured.");
-        }
-        logConfigurator.switchToDebug();
-        LOG.debug("Activated debug logging");
-    }
-
     private Masterkey loadMasterkey(URI keyId) {
         try (var passphraseContainer = passwordSource.readPassphrase()) {
             Path filePath = pathToVault.resolve("masterkey.cryptomator");
@@ -124,9 +110,28 @@ public class CryptomatorCli implements Callable<Integer> {
         return VaultConfig.decode(token);
     }
 
+    private int executionStrategy(ParseResult parseResult) {
+        if (logginMixin.isVerbose) {
+            activateVerboseMode();
+        }
+        return new RunLast().execute(parseResult); // default execution strategy
+    }
+
+    private void activateVerboseMode() {
+        var logConfigurator = LogbackConfigurator.INSTANCE.get();
+        if (logConfigurator == null) {
+            throw new IllegalStateException("Logging is not configured.");
+        }
+        logConfigurator.switchToDebug();
+        LOG.debug("Activated debug logging");
+    }
+
+
     public static void main(String... args) {
-        int exitCode = new CommandLine(new CryptomatorCli())
+        var app = new CryptomatorCli();
+        int exitCode = new CommandLine(app)
                 .setPosixClusteredShortOptionsAllowed(false)
+                .setExecutionStrategy(app::executionStrategy)
                 .execute(args);
         System.exit(exitCode);
     }
