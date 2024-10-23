@@ -12,6 +12,12 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<jdk.version>22</jdk.version>
 
+		<!--jpackage stuff -->
+		<!-- Group IDs of jars that need to stay on the class path for now
+		 remove them, as soon they got modularized or support is dropped (i.e., WebDAV) -->
+		<nonModularGroupIds>org.ow2.asm,org.apache.jackrabbit,org.apache.httpcomponents</nonModularGroupIds>
+
+
 		<!-- native image options -->
 		<mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
 		<native.optimization>-Ob</native.optimization> <!-- default: no optimization/dev build-->
@@ -106,6 +112,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>cryptomator-cli-${project.version}</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -138,63 +145,84 @@
 					</archive>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>${maven-shade.version}</version>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>exec-maven-plugin</artifactId>
+					<version>${maven-exec.version}</version>
+					<executions>
+						<execution>
+							<id>test-run</id>
+							<goals>
+								<goal>exec</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<executable>${env.JAVA_HOME}/bin/java</executable>
+						<arguments>
+							<argument>--module-path</argument>
+							<modulepath/>
+							<argument>--enable-native-access=org.cryptomator.jfuse.linux,org.cryptomator.jfuse.win,org.cryptomator.jfuse.mac</argument>
+							<argument>--module</argument>
+							<argument>org.cryptomator.cli/${mainClass}</argument>
+							<argument>--password:stdin</argument>
+							<argument>--mounter=org.cryptomator.frontend.fuse.mount.WinFspNetworkMountProvider</argument>
+							<argument>--mountPoint=X:\\</argument>
+							<argument>T:\\vaultFormat8</argument>
+						</arguments>
+					</configuration>
+				</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<executions>
+							<!-- sort jars into two buckets (classpath and modulepath). exclude openjfx, which gets jlinked separately -->
+							<execution>
+								<id>copy-mods</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>copy-dependencies</goal>
+								</goals>
+								<configuration>
+									<includeScope>runtime</includeScope>
+									<outputDirectory>${project.build.directory}/mods</outputDirectory>
+									<excludeGroupIds>${nonModularGroupIds}</excludeGroupIds>
+								</configuration>
+							</execution>
+							<execution>
+								<id>copy-libs</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>copy-dependencies</goal>
+								</goals>
+								<configuration>
+									<includeScope>runtime</includeScope>
+									<outputDirectory>${project.build.directory}/libs</outputDirectory>
+									<includeGroupIds>${nonModularGroupIds}</includeGroupIds>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+			<!--plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
 				<executions>
 					<execution>
+						<id>add-third-party</id>
 						<goals>
-							<goal>shade</goal>
+							<goal>add-third-party</goal>
 						</goals>
+						<phase>generate-resources</phase>
 						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<finalName>cryptomator-cli-${project.version}</finalName>
-							<transformers>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${mainClass}</mainClass>
-								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/org.cryptomator.integrations.mount.MountService</resource>
-								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/org.cryptomator.jfuse.api.FuseBuilder</resource>
-								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/ch.qos.logback.classic.spi.Configurator</resource>
-								</transformer>
-							</transformers>
+							<thirdPartyFilename>THIRD-PARTY.txt</thirdPartyFilename>
+							<includedScopes>compile</includedScopes>
+							<excludedGroups>org\.cryptomator</excludedGroups>
+							<licenseMergesUrl>file:///${project.basedir}/license/merges</licenseMergesUrl>
+							<fileTemplate>${project.basedir}/src/main/resources/license/template.ftl</fileTemplate>
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>${maven-exec.version}</version>
-				<executions>
-					<execution>
-						<id>test-run</id>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<executable>${env.JAVA_HOME}/bin/java</executable>
-					<arguments>
-						<argument>--module-path</argument>
-						<modulepath/>
-						<argument>--enable-native-access=org.cryptomator.jfuse.linux,org.cryptomator.jfuse.win,org.cryptomator.jfuse.mac</argument>
-						<argument>--module</argument>
-						<argument>org.cryptomator.cli/${mainClass}</argument>
-						<argument>--password:stdin</argument>
-						<argument>--mounter=org.cryptomator.frontend.fuse.mount.WinFspNetworkMountProvider</argument>
-						<argument>--mountPoint=X:\\</argument>
-						<argument>T:\\vaultFormat8</argument>
-					</arguments>
-				</configuration>
-			</plugin>
+			</plugin-->
 		</plugins>
 	</build>
 </project>

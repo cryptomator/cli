@@ -7,28 +7,49 @@ This is a minimal command-line application that unlocks a single vault of vault 
 
 ## Download and Usage
 
-Download the JAR file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
+Download the zip file via [GitHub Releases](https://github.com/cryptomator/cli/releases) and unzip it to your desired directory, e.g.
 
-Cryptomator CLI requires that at least JDK/JRE 22 is present on your system.
 ```sh
-java --enable-native-access="ALL-UNNAMED" -jar cryptomator-cli-x.y.z.jar \
-    --password:stdin \
-    --mounter=org.cryptomator.frontend.fuse.mount.FuseMountProvider \
-    --mountPoint=/home/user/existing/empty/dir \
-    /path/to/vault
-# Be aware that passing the password on the command-line typically makes it visible to anyone on your system!
+curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-cli-0.7.0-mac-arm64.dmg --output cryptomator-cli.zip
+unzip cryptomator-cli.zip
 ```
 
-For a complete list of options, start the jar with the `--help` argument.
+Afterwards, you can directly run Cryptomator-CLI:
+```sh
+cryptomator-cli unlock \
+--password:stdin \
+--mounter=org.cryptomator.frontend.fuse.mount.LinuxFuseMountProvider \
+--mountPoint=/path/to/empty/dir \
+/home/user/myVault
+```
+
+For a complete list of options, use the`--help` option.
 ```shell
-java --enable-native-access="ALL-UNNAMED" -jar cryptomator-cli-x.y.z.jar --help
+cryptomator-cli unlock --help`
 ```
 
-## Block Filesystem Integration 
+## FileSystem Integration
 
-Depending on the chosen mounter, the vault is automatically integrated into the os.
-If you don't want a direct integration, choose `org.cryptomator.frontend.webdav.mount.FallbackMounter` for `--mounter`.
-It starts a local WebDAV server started, where you can access the vault by any WebDAV client or mounting it into your filesystem manually.
+For an OS integration of your unlocked vault, cryptomator-cli relies on third party libraries which must be installed seperately.
+These are:
+* [WinFsp](https://winfsp.dev/) for Windows
+* [macFUSE](https://osxfuse.github.io/) or [FUSE-T](https://www.fuse-t.org/) for macOS
+* and [libfuse](https://github.com/libfuse/libfuse) for Linux/BSD systems (normally provided by a fuse3 package of your distro, e.g. [ubuntu](https://packages.ubuntu.com/noble/fuse3))
+
+As a fallback, you can [skip filesystem integration](README.md#skip-filesystem-integration).
+
+## Selecting the Mounter
+
+TODO
+
+## Skip Filesystem Integration 
+
+If you don't want a direct integration in the OS, choose `org.cryptomator.frontend.webdav.mount.FallbackMounter` for `--mounter`.
+It starts a local WebDAV server, where you can access the vault with any WebDAV client or mounting it into your filesystem manually.
+
+> [!NOTE]
+> The WebDAV protocol is supported by all major OSses. Hence, if other mounters fail or show errors when accessing the vault content, you can always use the legacy WebDAV option.
+> WebDAV is not the default, because it has a low performance and might have OS dependent restrictions (e.g. maximum file size of 4GB on Windows)
 
 ### Windows via Windows Explorer
 
