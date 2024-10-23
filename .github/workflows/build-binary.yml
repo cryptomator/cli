@@ -115,7 +115,7 @@ jobs:
           --java-options "-Xmx256m"
           --java-options '-Dfile.encoding="utf-8"'
           ${JPACKAGE_OS_OPTS}
-      - uses: upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           path: .\target\cryptomator-cli
           if-no-files-found: error
