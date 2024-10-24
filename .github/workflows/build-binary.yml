@@ -110,6 +110,7 @@ jobs:
           --vendor "Skymatic GmbH"
           --copyright "(C) 2016 - 2024 Skymatic GmbH"
           --app-version "${{ needs.prepare.outputs.semVerNum }}"
+          --java-options "-Dorg.cryptomator.cli.version=${{ needs.prepare.outputs.semVerStr }}"
           --java-options "--enable-preview"
           --java-options "--enable-native-access=${{ matrix.native-access-lib }}"
           --java-options "-Xss5m"

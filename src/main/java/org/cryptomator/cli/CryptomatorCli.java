@@ -10,12 +10,17 @@ import picocli.CommandLine.RunLast;
 
 @Command(name = "cryptomator-cli",
         mixinStandardHelpOptions = true,
-        version = "1.0.0",
+        version = "${org.cryptomator.cli.version}",
         description = "Unlocks a cryptomator vault and mounts it into the system.",
         subcommands = Unlock.class)
 public class CryptomatorCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(CryptomatorCli.class);
+
+    static {
+        System.getProperties().putIfAbsent("org.cryptomator.cli.version", "SNAPSHOT");
+    }
+
     @Mixin
     LoggingMixin loggingMixin;
 
