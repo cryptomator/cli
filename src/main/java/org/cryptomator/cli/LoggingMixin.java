@@ -23,6 +23,6 @@ public class LoggingMixin {
         // We want to store the verbosity value in a single, central place,
         // so we find the top-level command,
         // and store the verbosity level on our top-level command's LoggingMixin.
-        ((CryptomatorCli) mixee.root().userObject()).loggingMixin.isVerbose = true;
+        ((CryptomatorCli) mixee.root().userObject()).loggingMixin.isVerbose = isVerbose;
     }
 }
