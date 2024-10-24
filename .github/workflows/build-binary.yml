@@ -30,8 +30,10 @@ jobs:
         run: |
           if ( ${{github.event_name}} -eq 'release') {
             echo "version=${{ github.event.release.tag_name}}" >> $GITHUB_OUTPUT
+            exit 0
           } else if (${{inputs.sem-version}}) {
-             echo "version=${{ inputs.sem-version}}" >> $GITHUB_OUTPUT
+            echo "version=${{ inputs.sem-version}}" >> $GITHUB_OUTPUT
+            exit 0
           }
           Write-Error "Version neither via input nor by tag specified. Aborting"
           exit 1
@@ -40,8 +42,8 @@ jobs:
           SEM_VER_NUM=`echo ${{ steps.determine-version.outputs.version }} | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+).*/\1/'`
           echo "number=${SEM_VER_NUM}" >> $GITHUB_OUTPUT
 
-  build-win:
-    name: Build java app image on windows
+  build-binary:
+    name: Build java app image
     needs: [prepare]
     strategy:
       fail-fast: false
@@ -64,7 +66,7 @@ jobs:
             native-access-lib: 'org.cryptomator.jfuse.win'
     runs-on: ${{ matrix.os }}
     steps:
-      - name: prepare windows
+      - name: Preparations fpr windows runner
         if: startsWith(matrix.os, 'windows')
         run: echo "JPACKAGE_OS_OPTS=--win-console" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
@@ -95,7 +97,6 @@ jobs:
           --compress zip-6
       - name: Run jpackage
         shell: pwsh
-        #TODO: app version
         run: >
           & $env:JAVA_HOME\bin\jpackage
           --verbose
