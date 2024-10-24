@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.cryptomator.integrations.mount.MountCapability.*;
+
 public class MountSetup {
 
     private static final Logger LOG = LoggerFactory.getLogger(MountSetup.class);
@@ -46,6 +48,7 @@ public class MountSetup {
 
     @CommandLine.Option(names = {"--loopbackHostName"}, description = "Name of the loopback address.")
     Optional<String> loopbackHostName;
+    
     @CommandLine.Option(names = {"--loopbackPort"}, description = "Port used at the loopback address.")
     Optional<Integer> loopbackPort;
 
@@ -58,15 +61,15 @@ public class MountSetup {
                 case FILE_SYSTEM_NAME -> builder.setFileSystemName("cryptoFs");
                 case LOOPBACK_PORT -> {
                     loopbackPort.ifPresent(builder::setLoopbackPort);
-                    specifiedMOPs.put("loopbackPort", false);
+                    specifiedMOPs.put(LOOPBACK_PORT, false);
                 }
                 case LOOPBACK_HOST_NAME -> {
                     loopbackHostName.ifPresent(builder::setLoopbackHostName);
-                    specifiedMOPs.put("loopbackHostName", false);
+                    specifiedMOPs.put(LOOPBACK_HOST_NAME, false);
                 }
                 //TODO: case READ_ONLY -> builder.setReadOnly(vaultSettings.usesReadOnlyMode.get());
                 case MOUNT_FLAGS -> {
-                    specifiedMOPs.put("mountOptions", false);
+                    specifiedMOPs.put(MOUNT_FLAGS, false);
                     if (mountOptions.isEmpty()) {
                         var defaultFlags = mountService.getDefaultMountFlags();
                         LOG.debug("Using default mount options {}", defaultFlags);
@@ -80,31 +83,34 @@ public class MountSetup {
                 }
                 case VOLUME_NAME -> {
                     volumeName.ifPresent(builder::setVolumeName);
-                    specifiedMOPs.put("volumeName", false);
+                    specifiedMOPs.put(VOLUME_NAME, false);
+                }
+                default -> {
+                    //NO-OP
                 }
             }
         }
 
-        var ignoredMOPs = specifiedMOPs.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.joining(","));
+        var ignoredMOPs = specifiedMOPs.entrySet().stream().filter(Map.Entry::getValue).map(e -> e.getKey().name()).collect(Collectors.joining(","));
         if(!ignoredMOPs.isEmpty()) {
             LOG.info("Ignoring unsupported options: {}", ignoredMOPs);
         }
         return builder;
     }
 
-    private Map<String, Boolean> listSpecifiedMountOptions() {
-        var map = new HashMap<String, Boolean>();
-        loopbackPort.ifPresent(_ -> map.put("loopbackPort", true));
-        loopbackHostName.ifPresent(_ -> map.put("loopbackHostName", true));
-        volumeName.ifPresent(_ -> map.put("volumeName", true));
+    private Map<MountCapability, Boolean> listSpecifiedMountOptions() {
+        var map = new HashMap<MountCapability, Boolean>();
+        loopbackPort.ifPresent(_ -> map.put(LOOPBACK_PORT, true));
+        loopbackHostName.ifPresent(_ -> map.put(LOOPBACK_HOST_NAME, true));
+        volumeName.ifPresent(_ -> map.put(VOLUME_NAME, true));
         if (!mountOptions.isEmpty()) {
-            map.put("mountOption", true);
+            map.put(MOUNT_FLAGS, true);
         }
         return map;
     }
 
     Mount mount(FileSystem fs) throws MountFailedException {
-        if (!mountService.hasCapability(MountCapability.MOUNT_TO_SYSTEM_CHOSEN_PATH) && mountPoint.isEmpty()) {
+        if (!mountService.hasCapability(MOUNT_TO_SYSTEM_CHOSEN_PATH) && mountPoint.isEmpty()) {
             throw new CommandLine.ParameterException(spec.commandLine(), "The selected mounter %s requires a mount point. Use --mountPoint /path/to/mount/point to specify it.".formatted(mountService.displayName()));
         }
         var builder = prepareMountBuilder(fs);
