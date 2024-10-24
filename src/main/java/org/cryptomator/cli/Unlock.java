@@ -26,6 +26,7 @@ public class Unlock implements Callable<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(Unlock.class);
     private static final byte[] PEPPER = new byte[0];
     private static final String CONFIG_FILE_NAME = "vault.cryptomator";
+    private static final String MASTERKEY_FILE_NAME = "masterkey.cryptomator";
 
     @Spec
     Model.CommandSpec spec;
@@ -86,7 +87,7 @@ public class Unlock implements Callable<Integer> {
 
     private Masterkey loadMasterkey(URI keyId) {
         try (var passphraseContainer = passwordSource.readPassphrase()) {
-            Path filePath = pathToVault.resolve("masterkey.cryptomator");
+            Path filePath = pathToVault.resolve(MASTERKEY_FILE_NAME);
             return new MasterkeyFileAccess(PEPPER, csprng)
                     .load(filePath, CharBuffer.wrap(passphraseContainer.content()));
         } catch (IOException e) {
