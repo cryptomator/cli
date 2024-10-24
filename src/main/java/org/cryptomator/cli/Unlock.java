@@ -20,7 +20,18 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.concurrent.Callable;
 
-@Command(name = "unlock")
+@Command(name = "unlock",
+        header = "Unlocks a vault",
+        description = "Unlocks and mounts the given cryptomator vault, identified by the path to the vault directory." +
+                "The unlocked vault is mounted into the local filesystem by the specified mounter." +
+                "For a list of available mounters, use the `list-mounters` subcommand.",
+        parameterListHeading = "%nParameters:%n",
+        headerHeading = "Usage:%n%n",
+        synopsisHeading = "%n",
+        descriptionHeading = "%nDescription:%n%n",
+        optionListHeading = "%nOptions:%n",
+
+        mixinStandardHelpOptions = true)
 public class Unlock implements Callable<Integer> {
 
     private static final Logger LOG = LoggerFactory.getLogger(Unlock.class);
@@ -51,6 +62,7 @@ public class Unlock implements Callable<Integer> {
         }
         maxCleartextNameLength = input;
     }
+
     private int maxCleartextNameLength = 0;
 
     private SecureRandom csprng = null;

@@ -12,7 +12,7 @@ import picocli.CommandLine.RunLast;
         mixinStandardHelpOptions = true,
         version = "${org.cryptomator.cli.version}",
         description = "Unlocks a cryptomator vault and mounts it into the system.",
-        subcommands = Unlock.class)
+        subcommands = { Unlock.class, ListMounters.class})
 public class CryptomatorCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(CryptomatorCli.class);

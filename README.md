@@ -9,13 +9,13 @@ This is a minimal command-line application that unlocks a single vault of vault 
 
 Download the zip file via [GitHub Releases](https://github.com/cryptomator/cli/releases) and unzip it to your desired directory, e.g.
 
-```sh
+```shell
 curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-cli-0.7.0-mac-arm64.dmg --output cryptomator-cli.zip
 unzip cryptomator-cli.zip
 ```
 
 Afterwards, you can directly run Cryptomator-CLI:
-```sh
+```shell
 cryptomator-cli unlock \
 --password:stdin \
 --mounter=org.cryptomator.frontend.fuse.mount.LinuxFuseMountProvider \
@@ -25,22 +25,26 @@ cryptomator-cli unlock \
 
 For a complete list of options, use the`--help` option.
 ```shell
-cryptomator-cli unlock --help`
+cryptomator-cli --help`
 ```
 
 ## FileSystem Integration
 
-For an OS integration of your unlocked vault, cryptomator-cli relies on third party libraries which must be installed seperately.
+To integrate the unlocked vault into the filesystem, cryptomator-cli relies on third party libraries which must be installed separately.
 These are:
 * [WinFsp](https://winfsp.dev/) for Windows
 * [macFUSE](https://osxfuse.github.io/) or [FUSE-T](https://www.fuse-t.org/) for macOS
 * and [libfuse](https://github.com/libfuse/libfuse) for Linux/BSD systems (normally provided by a fuse3 package of your distro, e.g. [ubuntu](https://packages.ubuntu.com/noble/fuse3))
 
-As a fallback, you can [skip filesystem integration](README.md#skip-filesystem-integration).
+As a fallback, you can [skip filesystem integration](README.md#skip-filesystem-integration) by using WebDAV.
 
 ## Selecting the Mounter
 
-TODO
+To list all available mounters, use the `list-mounters` subcommand:
+```shell
+cryptomator-cli list-mounters
+```
+Pick one from the printed list and use it as input for the `--mounter` option.
 
 ## Skip Filesystem Integration 
 
