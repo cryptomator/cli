@@ -36,16 +36,16 @@ if [ $? -ne 0 ] || [ ! -d ./target/runtime ]; then
     exit 1
 fi
 
-NATIVE_ACCESS_PACKAGE="org.example"
+NATIVE_ACCESS_PACKAGE="no.native.access.needed"
 _OS=$(uname -s)
-if [ ! -z $(echo "$_OS" | grep Linux*) ]; then
+if (echo "$_OS" | grep -q "Linux.*") ; then
     _ARCH=$(uname -m)
     if [ "$_ARCH" = "x86_64" ]; then
         NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.linux.amd64"
     elif [ "$_ARCH" = "aarch64"  ]; then
         NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.linux.aarch64"
     fi
-elif [ ! -z $(echo "$_OS" | grep Darwin*) ]; then
+elif (echo "$_OS" | grep -q "Darwin.*"); then
     NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.darwin"
 fi
 
