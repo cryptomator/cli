@@ -5,6 +5,7 @@ import org.cryptomator.cryptofs.CryptoFileSystemProvider;
 import org.cryptomator.cryptofs.VaultConfig;
 import org.cryptomator.cryptolib.api.Masterkey;
 import org.cryptomator.cryptolib.common.MasterkeyFileAccess;
+import org.cryptomator.integrations.mount.Mount;
 import org.cryptomator.integrations.mount.UnmountFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,19 +83,20 @@ public class Unlock implements Callable<Integer> {
         try (var fs = CryptoFileSystemProvider.newFileSystem(pathToVault, fsPropsBuilder.build());
              var mount = mountSetup.mount(fs)) {
             System.out.println(mount.getMountpoint().uri());
-            while (true) {
-                int c = System.in.read();
-                //TODO: Password piping is currently not supported due to read() returing -1
-                if (c == -1 || c == 0x03 || c == 0x04) {//Ctrl+C, Ctrl+D
-                    LOG.info("Unmounting and locking vault...");
-                    mount.unmount();
-                    break;
-                }
-            }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown(mount)));
+            Thread.currentThread().join();
         } catch (UnmountFailedException e) {
             LOG.error("Regular unmount failed. Just terminating process...", e);
         }
         return 0;
+    }
+
+    private void teardown(Mount m) {
+        try {
+            m.close();
+        } catch (IOException | UnmountFailedException e) {
+            LOG.error("Graceful unmount failed, possible cleanup not executed.", e);
+        }
     }
 
     private Masterkey loadMasterkey(URI keyId) {
