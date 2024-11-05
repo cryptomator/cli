@@ -2,7 +2,6 @@ import ch.qos.logback.classic.spi.Configurator;
 import org.cryptomator.cli.LogbackConfigurator;
 
 open module org.cryptomator.cli {
-    uses Configurator;
     requires org.cryptomator.cryptofs;
     requires org.cryptomator.frontend.fuse;
     requires info.picocli;
