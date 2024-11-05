@@ -11,14 +11,14 @@ if(-not $env:JAVA_HOME) {
 
 Write-Host "Building java app with maven..."
 mvn -B clean package
-Copy-Item .\LICENSE.txt -Destination .\target
-Move-Item .\target\cryptomator-cli-*.jar .\target\mods
+Copy-Item ./LICENSE.txt -Destination ./target
+Move-Item ./target/cryptomator-cli-*.jar ./target/mods
 
 Write-Host "Creating JRE with jlink..."
-& $env:JAVA_HOME\bin\jlink `
+& $env:JAVA_HOME/bin/jlink `
 --verbose `
---output target\runtime `
---module-path "${env:JAVA_HOME}\jmods" `
+--output target/runtime `
+--module-path "${env:JAVA_HOME}/jmods" `
 --add-modules java.base,java.compiler,java.naming,java.xml `
 --strip-native-commands `
 --no-header-files `
@@ -26,14 +26,14 @@ Write-Host "Creating JRE with jlink..."
 --strip-debug `
 --compress zip-0
 
-if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path .\target\runtime))) {
+if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/runtime))) {
    throw "JRE creation with jLink failed with exit code $LASTEXITCODE."
 }
 
 # jpackage
 # app-version is hard coded, since the script is only for local test builds
 Write-Host "Creating app binary with jpackage..."
-& $env:JAVA_HOME\bin\jpackage `
+& $env:JAVA_HOME/bin/jpackage `
     --verbose `
     --type app-image `
     --runtime-image target/runtime `
@@ -53,6 +53,6 @@ Write-Host "Creating app binary with jpackage..."
     --java-options '-Dfile.encoding="utf-8"' `
     --win-console
 
-if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path .\target\cryptomator-cli))) {
+if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/cryptomator-cli))) {
     throw "Binary creation with jpackage failed with exit code $LASTEXITCODE."
 }
