@@ -39,6 +39,7 @@ public class Unlock implements Callable<Integer> {
     private static final byte[] PEPPER = new byte[0];
     private static final String CONFIG_FILE_NAME = "vault.cryptomator";
     private static final String MASTERKEY_FILE_NAME = "masterkey.cryptomator";
+    private static final String FORCED_UNMOUNT_MSG = "GRACEFUL UNMOUNT FAILED. Please check if manual cleanups are necessary";
 
     @Spec
     Model.CommandSpec spec;
@@ -86,7 +87,7 @@ public class Unlock implements Callable<Integer> {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown(mount)));
             Thread.currentThread().join();
         } catch (UnmountFailedException e) {
-            LOG.error("Regular unmount failed. Just terminating process...", e);
+            LOG.error(FORCED_UNMOUNT_MSG, e);
         }
         return 0;
     }
@@ -95,7 +96,7 @@ public class Unlock implements Callable<Integer> {
         try {
             m.close();
         } catch (IOException | UnmountFailedException e) {
-            LOG.error("Graceful unmount failed, possible cleanup not executed.", e);
+            LOG.error(FORCED_UNMOUNT_MSG, e);
         }
     }
 

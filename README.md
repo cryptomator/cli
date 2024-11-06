@@ -93,6 +93,18 @@ Mount the vault with:
 osascript -e 'mount volume "http://localhost:8080/demoVault/"'
 ```
 
+## Manual Cleanup
+
+If a handle to a resource inside the unlocked vault is still open, a graceful unmount is not possible and cryptomator-cli just terminates without executing possible cleanup tasks.
+In that case the message "GRACEFUL UNMOUNT FAILED" is printed to the console/stdout.
+
+On a linux OS with the `LinuxFuseMountProvider`, the manual cleanup task is to unmount and free the mountpoint:
+```
+fusermount -u /path/to/former/mountpoint
+```
+
+For other OSs, there is no cleanup necessary.
+
 ## License
 
 This project is dual-licensed under the AGPLv3 for FOSS projects as well as a commercial license derived from the LGPL for independent software vendors and resellers. If you want to use this library in applications, that are *not* licensed under the AGPL, feel free to contact our [support team](https://cryptomator.org/help/).
