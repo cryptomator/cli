@@ -36,7 +36,7 @@ if [ $? -ne 0 ] || [ ! -d ./target/runtime ]; then
     exit 1
 fi
 
-NATIVE_ACCESS_PACKAGE="no.native.access.needed"
+NATIVE_ACCESS_PACKAGE="no.native.access.available"
 _OS=$(uname -s)
 if (echo "$_OS" | grep -q "Linux.*") ; then
     _ARCH=$(uname -m)
@@ -45,8 +45,6 @@ if (echo "$_OS" | grep -q "Linux.*") ; then
     elif [ "$_ARCH" = "aarch64"  ]; then
         NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.linux.aarch64"
     fi
-elif (echo "$_OS" | grep -q "Darwin.*"); then
-    NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.darwin"
 fi
 
 echo "Creating app binary with jpackage..."
