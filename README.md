@@ -10,7 +10,7 @@ This is a minimal command-line application that unlocks a single vault of vault 
 Download the zip file via [GitHub Releases](https://github.com/cryptomator/cli/releases) and unzip it to your desired directory, e.g.
 
 ```shell
-curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-cli-0.7.0-mac-arm64.dmg --output cryptomator-cli.zip
+curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-cli-0.7.0-mac-arm64.zip --output cryptomator-cli.zip
 unzip cryptomator-cli.zip
 ```
 
@@ -22,6 +22,8 @@ cryptomator-cli unlock \
 --mountPoint=/path/to/empty/dir \
 /home/user/myVault
 ```
+
+To unmount, send a SIGTERM signal to the process, e.g. by pressing CTRL+C (macOS: CMD+C) in the terminal.
 
 For a complete list of options, use the`--help` option.
 ```shell
