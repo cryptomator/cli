@@ -87,10 +87,9 @@ public class Unlock implements Callable<Integer> {
             System.out.println(mount.getMountpoint().uri());
             Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown(mount)));
             Thread.currentThread().join();
-        } catch (UnmountFailedException e) {
-            LOG.error(FORCED_UNMOUNT_MSG, e);
         }
-        return 0;
+
+        throw new IllegalStateException("Application exited without error or receiving shutdown signal.");
     }
 
     private void teardown(Mount m) {
