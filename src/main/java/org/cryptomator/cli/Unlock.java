@@ -4,6 +4,7 @@ import org.cryptomator.cryptofs.CryptoFileSystemProperties;
 import org.cryptomator.cryptofs.CryptoFileSystemProvider;
 import org.cryptomator.cryptofs.VaultConfig;
 import org.cryptomator.cryptolib.api.Masterkey;
+import org.cryptomator.cryptolib.api.MasterkeyLoadingFailedException;
 import org.cryptomator.cryptolib.common.MasterkeyFileAccess;
 import org.cryptomator.integrations.mount.Mount;
 import org.cryptomator.integrations.mount.UnmountFailedException;
@@ -101,12 +102,13 @@ public class Unlock implements Callable<Integer> {
     }
 
     private Masterkey loadMasterkey(URI keyId) {
+        Path filePath = pathToVault.resolve(MASTERKEY_FILE_NAME);
         try (var passphraseContainer = passwordSource.readPassphrase()) {
-            Path filePath = pathToVault.resolve(MASTERKEY_FILE_NAME);
             return new MasterkeyFileAccess(PEPPER, csprng)
                     .load(filePath, CharBuffer.wrap(passphraseContainer.content()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("Reading {} failed.", filePath, e);
+            throw new MasterkeyLoadingFailedException("Unable to load key from file " + filePath + ": " + e.getMessage());
         }
     }
 
