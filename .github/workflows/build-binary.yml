@@ -52,18 +52,23 @@ jobs:
           - os: ubuntu-latest
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
+            binary-dir-suffix: ""
           - os: [self-hosted, Linux, ARM64]
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
+            binary-dir-suffix: ""
           - os: macos-latest-large
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.mac'
+            binary-dir-suffix: ".app"
           - os: macos-latest
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.mac'
+            binary-dir-suffix: ".app"
           - os: windows-latest
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.win'
+            binary-dir-suffix: ""
     runs-on: ${{ matrix.os }}
     steps:
       - name: Preparations fpr windows runner
@@ -119,6 +124,26 @@ jobs:
           ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
-          path: .\target\cryptomator-cli
+          path: .\target\cryptomator-cli${{ matrix.binary-dir-suffix }}
           if-no-files-found: error
+      - name: Zip binary for release
+        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
+        shell: pwsh
+        run: Compress-Archive -Path .\target\cryptomator-cli${{ matrix.binary-dir-suffix }} -DestinationPath .\cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+      - name: Create detached GPG signature with key 615D449FE6E6A235
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a .\cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - name: Publish artefact on GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
+          files: |
+            cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+            cryptomator-cli-*.asc
 
