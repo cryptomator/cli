@@ -55,11 +55,11 @@ jobs:
           - os: [self-hosted, Linux, ARM64]
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
-          - os: [self-hosted, macOS, ARM64]
-            architecture: aarch64
+          - os: macos-latest-large
+            architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.mac'
           - os: macos-latest
-            architecture: x64
+            architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.mac'
           - os: windows-latest
             architecture: x64
