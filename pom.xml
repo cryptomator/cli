@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cryptomator</groupId>
 	<artifactId>cli</artifactId>
@@ -145,64 +146,37 @@
 					</archive>
 				</configuration>
 			</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>exec-maven-plugin</artifactId>
-					<version>${maven-exec.version}</version>
-					<executions>
-						<execution>
-							<id>test-run</id>
-							<goals>
-								<goal>exec</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<executable>${env.JAVA_HOME}/bin/java</executable>
-						<arguments>
-							<argument>--module-path</argument>
-							<modulepath/>
-							<argument>--enable-native-access=org.cryptomator.jfuse.linux,org.cryptomator.jfuse.win,org.cryptomator.jfuse.mac</argument>
-							<argument>--module</argument>
-							<argument>org.cryptomator.cli/${mainClass}</argument>
-							<argument>--password:stdin</argument>
-							<argument>--mounter=org.cryptomator.frontend.fuse.mount.WinFspNetworkMountProvider</argument>
-							<argument>--mountPoint=X:\\</argument>
-							<argument>T:\\vaultFormat8</argument>
-						</arguments>
-					</configuration>
-				</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<executions>
-							<!-- sort jars into two buckets (classpath and modulepath). exclude openjfx, which gets jlinked separately -->
-							<execution>
-								<id>copy-mods</id>
-								<phase>prepare-package</phase>
-								<goals>
-									<goal>copy-dependencies</goal>
-								</goals>
-								<configuration>
-									<includeScope>runtime</includeScope>
-									<outputDirectory>${project.build.directory}/mods</outputDirectory>
-									<excludeGroupIds>${nonModularGroupIds}</excludeGroupIds>
-								</configuration>
-							</execution>
-							<execution>
-								<id>copy-libs</id>
-								<phase>prepare-package</phase>
-								<goals>
-									<goal>copy-dependencies</goal>
-								</goals>
-								<configuration>
-									<includeScope>runtime</includeScope>
-									<outputDirectory>${project.build.directory}/libs</outputDirectory>
-									<includeGroupIds>${nonModularGroupIds}</includeGroupIds>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<!-- sort jars into two buckets (classpath and modulepath). exclude openjfx, which gets jlinked separately -->
+					<execution>
+						<id>copy-mods</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeScope>runtime</includeScope>
+							<outputDirectory>${project.build.directory}/mods</outputDirectory>
+							<excludeGroupIds>${nonModularGroupIds}</excludeGroupIds>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-libs</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeScope>runtime</includeScope>
+							<outputDirectory>${project.build.directory}/libs</outputDirectory>
+							<includeGroupIds>${nonModularGroupIds}</includeGroupIds>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<!--plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>license-maven-plugin</artifactId>
