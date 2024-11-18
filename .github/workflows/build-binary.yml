@@ -54,22 +54,27 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            suffix: linux
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
             binary-dir-suffix: ""
           - os: [self-hosted, Linux, ARM64]
+            suffix: linux
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
             binary-dir-suffix: ""
           - os: macos-latest-large
+            suffix: mac
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.mac'
             binary-dir-suffix: ".app"
           - os: macos-latest
+            suffix: mac
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.mac'
             binary-dir-suffix: ".app"
           - os: windows-latest
+            suffix: win
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.win'
             binary-dir-suffix: ""
@@ -126,6 +131,7 @@ jobs:
           ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
+          name: cryptomator-cli-${{matrix.suffix}}
           path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
           if-no-files-found: error
       - name: Zip binary for release
@@ -145,6 +151,6 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+            cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-${{matrix.suffix}}-${{matrix.architecture}}.zip
             cryptomator-cli-*.asc
 
