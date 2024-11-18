@@ -35,7 +35,7 @@ jobs:
           if ( ${{github.event_name}} -eq 'release') {
             echo "version=${{ github.event.release.tag_name}}" >> "$GITHUB_OUTPUT"
             exit 0
-          } else if (${{inputs.sem-version}}) {
+          } elseif (${{inputs.sem-version}}) {
             echo "version=${{ inputs.sem-version}}" >> "$GITHUB_OUTPUT"
             exit 0
           }
