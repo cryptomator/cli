@@ -3,34 +3,59 @@
 
 # Cryptomator CLI
 
-This is a minimal command-line application that unlocks vaults of vault format 8.
-After unlocking the vaults, its vault content can be accessed via an embedded WebDAV server.
-The minimum required Java version is JDK 17.
-
-## Disclaimer
-
-:warning: This project is in an early stage and not ready for production use. We recommend using it only for testing and evaluation purposes.
+This is a minimal command-line application that unlocks a single vault of vault format 8 and mounts it into the system.
 
 ## Download and Usage
 
-Download the JAR file via [GitHub Releases](https://github.com/cryptomator/cli/releases).
+Download the zip file via [GitHub Releases](https://github.com/cryptomator/cli/releases) and unzip it to your desired directory, e.g.
 
-Cryptomator CLI requires that at least JDK 17 is present on your system.
-
-```sh
-java -jar cryptomator-cli-x.y.z.jar \
-    --vault demoVault=/path/to/vault --password demoVault=topSecret \
-    --vault otherVault=/path/to/differentVault --passwordfile otherVault=/path/to/fileWithPassword \
-    --vault thirdVault=/path/to/thirdVault  \
-    --bind 127.0.0.1 --port 8080
-# You can now mount http://localhost:8080/demoVault/
-# The password for the third vault is read from stdin
-# Be aware that passing the password on the command-line typically makes it visible to anyone on your system!
+```shell
+curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-cli-0.7.0-mac-arm64.zip --output cryptomator-cli.zip
+unzip cryptomator-cli.zip
 ```
 
-## Filesystem Integration
+Afterwards, you can directly run Cryptomator-CLI:
+```shell
+cryptomator-cli unlock \
+--password:stdin \
+--mounter=org.cryptomator.frontend.fuse.mount.LinuxFuseMountProvider \
+--mountPoint=/path/to/empty/dir \
+/home/user/myVault
+```
 
-Once the vault is unlocked and the WebDAV server started, you can access the vault by any WebDAV client or directly mounting it in your filesystem.
+To unmount, send a SIGTERM signal to the process, e.g. by pressing CTRL+C (macOS: CMD+C) in the terminal.
+
+For a complete list of options, use the`--help` option.
+```shell
+cryptomator-cli --help`
+```
+
+## FileSystem Integration
+
+To integrate the unlocked vault into the filesystem, cryptomator-cli relies on third party libraries which must be installed separately.
+These are:
+* [WinFsp](https://winfsp.dev/) for Windows
+* [macFUSE](https://osxfuse.github.io/) or [FUSE-T](https://www.fuse-t.org/) for macOS
+* and [libfuse](https://github.com/libfuse/libfuse) for Linux/BSD systems (normally provided by a fuse3 package of your distro, e.g. [ubuntu](https://packages.ubuntu.com/noble/fuse3))
+
+As a fallback, you can [skip filesystem integration](README.md#skip-filesystem-integration) by using WebDAV.
+
+## Selecting the Mounter
+
+To list all available mounters, use the `list-mounters` subcommand:
+```shell
+cryptomator-cli list-mounters
+```
+Pick one from the printed list and use it as input for the `--mounter` option.
+
+## Skip Filesystem Integration 
+
+If you don't want a direct integration in the OS, choose `org.cryptomator.frontend.webdav.mount.FallbackMounter` for `--mounter`.
+It starts a local WebDAV server, where you can access the vault with any WebDAV client or mounting it into your filesystem manually.
+
+> [!NOTE]
+> The WebDAV protocol is supported by all major OSses. Hence, if other mounters fail or show errors when accessing the vault content, you can always use the legacy WebDAV option.
+> WebDAV is not the default, because it has a low performance and might have OS dependent restrictions (e.g. maximum file size of 4GB on Windows)
 
 ### Windows via Windows Explorer
 
@@ -64,54 +89,21 @@ sudo umount /media/your/mounted/folder
 ### macOS via AppleScript
 
 Mount the vault with:
-
 ```sh
 osascript -e 'mount volume "http://localhost:8080/demoVault/"'
 ```
 
-Unmount the vault with:
+## Manual Cleanup
 
-```sh
-osascript -e 'tell application "Finder" to if "demoVault" exists then eject "demoVault"'
+If a handle to a resource inside the unlocked vault is still open, a graceful unmount is not possible and cryptomator-cli just terminates without executing possible cleanup tasks.
+In that case the message "GRACEFUL UNMOUNT FAILED" is printed to the console/stdout.
+
+On a linux OS with the `LinuxFuseMountProvider`, the manual cleanup task is to unmount and free the mountpoint:
+```
+fusermount -u /path/to/former/mountpoint
 ```
 
-## Using as a Docker image
-
-### Bridge Network with Port Forwarding
-
-:warning: **WARNING: This approach should only be used to test the containerized approach, not in production.** :warning:
-
-The reason is that with port forwarding, you need to listen on all interfaces. Other devices on the network could also access your WebDAV server and potentially expose your secret files.
-
-Ideally, you would run this in a private Docker network with trusted containers built by yourself communicating with each other. **Again, the below example is for testing purposes only to understand how the container would behave in production.**
-
-```sh
-docker run --rm -p 8080:8080 \
-    -v /path/to/vault:/vaults/vault \
-    -v /path/to/differentVault:/vaults/differentVault \
-    -v /path/to/fileWithPassword:/passwordFile \
-    cryptomator/cli \
-    --bind 0.0.0.0 --port 8080 \
-    --vault demoVault=/vaults/vault --password demoVault=topSecret \
-    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# You can now mount http://localhost:8080/demoVault/
-```
-
-### Host Network
-
-```sh
-docker run --rm --network=host \
-    -v /path/to/vault:/vaults/vault \
-    -v /path/to/differentVault:/vaults/differentVault \
-    -v /path/to/fileWithPassword:/passwordFile \
-    cryptomator/cli \
-    --bind 127.0.0.1 --port 8080 \
-    --vault demoVault=/vaults/vault --password demoVault=topSecret \
-    --vault otherVault=/vaults/differentVault --passwordfile otherVault=/passwordFile
-# You can now mount http://localhost:8080/demoVault/
-```
-
-Then you can access the vault using any WebDAV client.
+For other OSs, there is no cleanup necessary.
 
 ## License
 
