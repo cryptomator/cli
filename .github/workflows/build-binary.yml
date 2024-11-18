@@ -75,7 +75,7 @@ jobs:
             binary-dir-suffix: ""
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Preparations fpr windows runner
+      - name: Preparations for windows runner
         if: startsWith(matrix.os, 'windows')
         run: echo "JPACKAGE_OS_OPTS=--win-console" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
@@ -92,12 +92,11 @@ jobs:
           cp LICENSE.txt target
           cp target/cryptomator-*.jar target/mods
       - name: Run jlink
-        shell: pwsh
         run: >
-          & $env:JAVA_HOME\bin\jlink
+          ${JAVA_HOME}/bin/jlink
           --verbose
-          --output target\runtime
-          --module-path "${env:JAVA_HOME}\jmods"
+          --output target/runtime
+          --module-path "${JAVA_HOME}/jmods"
           --add-modules java.base,java.compiler,java.naming,java.xml `
           --strip-native-commands `
           --no-header-files `
@@ -105,9 +104,8 @@ jobs:
           --strip-debug `
           --compress zip-6
       - name: Run jpackage
-        shell: pwsh
         run: >
-          & $env:JAVA_HOME\bin\jpackage
+          ${JAVA_HOME}/bin/jpackage
           --verbose
           --type app-image
           --runtime-image target/runtime
@@ -124,7 +122,7 @@ jobs:
           --java-options "--enable-native-access=${{ matrix.native-access-lib }}"
           --java-options "-Xss5m"
           --java-options "-Xmx256m"
-          --java-options '-Dfile.encoding="utf-8"'
+          --java-options "-Dfile.encoding=\"utf-8\""
           ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
@@ -132,8 +130,7 @@ jobs:
           if-no-files-found: error
       - name: Zip binary for release
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
-        shell: pwsh
-        run: Compress-Archive -Path .\target\cryptomator-cli${{ matrix.binary-dir-suffix }} -DestinationPath .\cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+        run: zip -r ./target/cryptomator-cli${{ matrix.binary-dir-suffix }} ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
