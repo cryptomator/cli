@@ -14,9 +14,9 @@ curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-c
 unzip cryptomator-cli.zip
 ```
 
-Afterwards, you can directly run Cryptomator-CLI:
+Afterward, you can directly run Cryptomator-CLI by calling the binary, e.g. on Linux:
 ```shell
-cryptomator-cli unlock \
+./cryptomator-cli/cryptomator-cli unlock \
 --password:stdin \
 --mounter=org.cryptomator.frontend.fuse.mount.LinuxFuseMountProvider \
 --mountPoint=/path/to/empty/dir \
@@ -30,7 +30,7 @@ For a complete list of options, use the`--help` option.
 cryptomator-cli --help`
 ```
 
-## FileSystem Integration
+## Filesystem Integration
 
 To integrate the unlocked vault into the filesystem, cryptomator-cli relies on third party libraries which must be installed separately.
 These are:
