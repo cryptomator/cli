@@ -9,6 +9,10 @@ on:
         description: 'Version'
         required: false
 
+permissions:
+  contents: write
+  packages: write
+
 env:
   JAVA_DIST: 'zulu'
   JAVA_VERSION: '22.0.2+9'
@@ -78,7 +82,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: '22'
-          distribution: 'temurin'
+          distribution: 'zulu'
       - name: Set version
         run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
       - name: Run maven
@@ -124,7 +128,7 @@ jobs:
           ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
-          path: .\target\cryptomator-cli${{ matrix.binary-dir-suffix }}
+          path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
           if-no-files-found: error
       - name: Zip binary for release
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
@@ -133,7 +137,7 @@ jobs:
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a .\cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}

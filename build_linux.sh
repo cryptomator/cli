@@ -16,7 +16,7 @@ if [ -z "$JAVA_HOME" ]; then
 fi
 
 # Check Java version
-MIN_JAVA_VERSION=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout):w
+MIN_JAVA_VERSION=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
 JAVA_VERSION=$("$JAVA_HOME/bin/java" -version | head -n1 | cut -d' ' -f2 | cut -d'.' -f1)
 if [ "$JAVA_VERSION" -lt "$MIN_JAVA_VERSION" ]; then
     echo "Java version $JAVA_VERSION is too old. Minimum required version is $MIN_JAVA_VERSION"
