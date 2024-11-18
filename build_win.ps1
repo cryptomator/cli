@@ -1,18 +1,27 @@
 "Building cryptomator cli..."
 
+# Check if maven is installed
 $commands = 'mvn'
 foreach ($cmd in $commands) {
     Invoke-Expression -Command "${cmd} --version" -ErrorAction Stop
 }
 
+# Check if JAVA_HOME is set
 if(-not $env:JAVA_HOME) {
     throw "Environment variable JAVA_HOME not defined"
 }
 
+# Check Java version
+$minJavaVersion=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
+$javaVersion = $(& "$env:JAVA_HOME\bin\java" --version) -split ' ' | Select-Object -Index 1
+if( ($javaVersion -split '.' | Select-Object -First 1) -ne "22") {
+    throw "Java version $javaVersion is too old. Minimum required version is $minJavaVersion"
+}
+
 Write-Host "Building java app with maven..."
 mvn -B clean package
-Copy-Item ./LICENSE.txt -Destination ./target
-Move-Item ./target/cryptomator-cli-*.jar ./target/mods
+Copy-Item ./LICENSE.txt -Destination ./target -ErrorAction Stop
+Move-Item ./target/cryptomator-cli-*.jar ./target/mods -ErrorAction Stop
 
 Write-Host "Creating JRE with jlink..."
 & $env:JAVA_HOME/bin/jlink `

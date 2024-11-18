@@ -14,6 +14,14 @@ if [ -z "$JAVA_HOME" ]; then
     exit 1
 fi
 
+# Check Java version
+MIN_JAVA_VERSION=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
+JAVA_VERSION=$("$JAVA_HOME/bin/java" -version | head -n1 | cut -d' ' -f2 | cut -d'.' -f1)
+if [ "$JAVA_VERSION" -lt "$MIN_JAVA_VERSION" ]; then
+    echo "Java version $JAVA_VERSION is too old. Minimum required version is $MIN_JAVA_VERSION"
+    exit 1
+fi
+
 echo "Building java app with maven..."
 mvn -B clean package
 cp ./LICENSE.txt ./target/

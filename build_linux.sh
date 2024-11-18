@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euxo pipefail
 
 echo "Building cryptomator cli..."
 
@@ -11,6 +12,14 @@ fi
 # Check if JAVA_HOME is set
 if [ -z "$JAVA_HOME" ]; then
     echo "Environment variable JAVA_HOME not defined"
+    exit 1
+fi
+
+# Check Java version
+MIN_JAVA_VERSION=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout):w
+JAVA_VERSION=$("$JAVA_HOME/bin/java" -version | head -n1 | cut -d' ' -f2 | cut -d'.' -f1)
+if [ "$JAVA_VERSION" -lt "$MIN_JAVA_VERSION" ]; then
+    echo "Java version $JAVA_VERSION is too old. Minimum required version is $MIN_JAVA_VERSION"
     exit 1
 fi
 
@@ -44,6 +53,9 @@ if (echo "$_OS" | grep -q "Linux.*") ; then
         NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.linux.amd64"
     elif [ "$_ARCH" = "aarch64"  ]; then
         NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.linux.aarch64"
+    else
+        echo "Warning: Unsupported Linux architecture for FUSE mounter: $_ARCH"
+        echo "FUSE supported architectures: x86_64, aarch64"
     fi
 fi
 
