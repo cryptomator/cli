@@ -33,10 +33,10 @@ jobs:
         shell: pwsh
         run: |
           if ( '${{github.event_name}}' -eq 'release') {
-            echo "version=${{ github.event.release.tag_name}}" >> "$GITHUB_OUTPUT"
+            echo 'version=${{ github.event.release.tag_name}}' >> "$env:GITHUB_OUTPUT"
             exit 0
           } elseif ('${{inputs.sem-version}}') {
-            echo "version=${{ inputs.sem-version}}" >> "$GITHUB_OUTPUT"
+            echo 'version=${{ inputs.sem-version}}' >> "$env:GITHUB_OUTPUT"
             exit 0
           }
           Write-Error "Version neither via input nor by tag specified. Aborting"
