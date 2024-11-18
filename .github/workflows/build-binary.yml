@@ -135,7 +135,6 @@ jobs:
           path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
           if-no-files-found: error
       - name: Zip binary for release
-        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
         run: zip -r ./target/cryptomator-cli${{ matrix.binary-dir-suffix }} ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
