@@ -23,7 +23,7 @@ public class PasswordSource {
     @CommandLine.Option(names = "--password:env", description = "Name of the environment variable containing the passphrase")
     String passphraseEnvironmentVariable = null;
 
-    @CommandLine.Option(names = "--password:file", description = "Path of the file containing the passphrase. The password file must be utf-8 encoded and must not end with a new line")
+    @CommandLine.Option(names = "--password:file", description = "Path of the file containing the passphrase. The password file must be utf-8 encoded")
     Path passphraseFile = null;
 
     Passphrase readPassphrase() throws IOException {
@@ -58,7 +58,12 @@ public class PasswordSource {
             }
             fileContent = Files.readAllBytes(passphraseFile);
             charWrapper = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(fileContent));
-            char[] content = new char[charWrapper.limit()];
+            //strips newline, since most files on linux end with a new line
+            var length = charWrapper.limit();
+            if(charWrapper.get(length) == '\n') {
+               length--;
+            }
+            char[] content = new char[length];
             charWrapper.get(content);
             return new Passphrase(content);
         } catch (IOException e) {
