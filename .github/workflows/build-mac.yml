@@ -116,11 +116,11 @@ jobs:
           name: cryptomator-cli-mac-${{ matrix.architecture }}
           path: ./target/cryptomator-cli.app
           if-no-files-found: error
-      - name: Patch Cryptomator.app
+      - name: Patch .app dir
         run: |
-          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" ./target/Cryptomator.app/Contents/Info.plist
-          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" ./target/Cryptomator.app/Contents/Info.plist
-          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output ./target/Cryptomator.app/Contents/embedded.provisionprofile
+          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" ./target/cryptomator-cli.app/Contents/Info.plist
+          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" ./target/cryptomator-cli.app/Contents/Info.plist
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output ./target/cryptomator-cli.app/Contents/embedded.provisionprofile
         env:
           VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
           REVISION_NO: ${{ needs.prepare.outputs.revisionNum }}
