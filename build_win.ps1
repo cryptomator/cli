@@ -14,7 +14,7 @@ if(-not $env:JAVA_HOME) {
 # Check Java version
 $minJavaVersion=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
 $javaVersion = $(& "$env:JAVA_HOME\bin\java" --version) -split ' ' | Select-Object -Index 1
-if( ($javaVersion -split '.' | Select-Object -First 1) -ne "22") {
+if( ($javaVersion.Split('.') | Select-Object -First 1) -ne "22") {
     throw "Java version $javaVersion is too old. Minimum required version is $minJavaVersion"
 }
 
@@ -43,24 +43,9 @@ if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/runtime))) {
 # app-version is hard coded, since the script is only for local test builds
 Write-Host "Creating app binary with jpackage..."
 & $env:JAVA_HOME/bin/jpackage `
-    --verbose `
-    --type app-image `
-    --runtime-image target/runtime `
-    --input target/libs `
-    --module-path target/mods `
-    --module org.cryptomator.cli/org.cryptomator.cli.CryptomatorCli `
-    --dest target `
-    --name cryptomator-cli `
-    --vendor "Skymatic GmbH" `
-    --copyright "(C) 2016 - 2024 Skymatic GmbH" `
-    --app-version "0.0.1.0" `
-    --java-options "-Dorg.cryptomator.cli.version=0.0.1-local" `
-    --java-options "--enable-preview" `
-    --java-options "--enable-native-access=org.cryptomator.jfuse.win" `
-    --java-options "-Xss5m" `
-    --java-options "-Xmx256m" `
-    --java-options '-Dfile.encoding="utf-8"' `
-    --win-console
+`@./dist/jpackage.args `
+--java-options "--enable-native-access=org.cryptomator.jfuse.win" `
+--win-console
 
 if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/cryptomator-cli))) {
     throw "Binary creation with jpackage failed with exit code $LASTEXITCODE."

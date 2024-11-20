@@ -61,23 +61,8 @@ fi
 
 echo "Creating app binary with jpackage..."
 "$JAVA_HOME/bin/jpackage" \
-    --verbose \
-    --type app-image \
-    --runtime-image target/runtime \
-    --input target/libs \
-    --module-path target/mods \
-    --module org.cryptomator.cli/org.cryptomator.cli.CryptomatorCli \
-    --dest target \
-    --name cryptomator-cli \
-    --vendor "Skymatic GmbH" \
-    --copyright "(C) 2016 - 2024 Skymatic GmbH" \
-    --app-version "0.0.1.0" \
-    --java-options "-Dorg.cryptomator.cli.version=0.0.1-local" \
-    --java-options "--enable-preview" \
-    --java-options "--enable-native-access=${NATIVE_ACCESS_PACKAGE}" \
-    --java-options "-Xss5m" \
-    --java-options "-Xmx256m" \
-    --java-options "-Dfile.encoding=utf-8" \
+    '@./dist/jpackage.args' \
+    --java-options "--enable-native-access=${NATIVE_ACCESS_PACKAGE}"
 
 if [ $? -ne 0 ] || [ ! -d ./target/cryptomator-cli ]; then
     echo "Binary creation with jpackage failed."

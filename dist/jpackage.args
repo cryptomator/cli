@@ -1,0 +1,15 @@
+--verbose
+--type app-image
+--runtime-image target/runtime
+--input target/libs
+--module-path target/mods
+--module org.cryptomator.cli/org.cryptomator.cli.CryptomatorCli
+--dest target
+--name cryptomator-cli
+--vendor "Skymatic GmbH"
+--copyright "(C) 2016 - 2024 Skymatic GmbH"
+--app-version "99.9.9"
+--java-options "-Dorg.cryptomator.cli.version=0.1.0-local"
+--java-options "-Xss5m"
+--java-options "-Xmx256m"
+--java-options "-Dfile.encoding=\"utf-8\""
