@@ -1,4 +1,4 @@
-name: Build java app image
+name: Java app image macOS
 
 on:
   release:
@@ -53,41 +53,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            suffix: linux
-            architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
-            binary-dir-suffix: ""
-          - os: [self-hosted, Linux, ARM64]
-            suffix: linux
-            architecture: aarch64
-            native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
-            binary-dir-suffix: ""
-          - os: macos-latest-large
-            suffix: mac
-            architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.mac'
-            binary-dir-suffix: ".app"
           - os: macos-latest
-            suffix: mac
-            architecture: aarch64
-            native-access-lib: 'org.cryptomator.jfuse.mac'
-            binary-dir-suffix: ".app"
-          - os: windows-latest
-            suffix: win
+            architecture: arm64
+            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-arm64.zip
+          - os: macos-13
             architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.win'
-            binary-dir-suffix: ""
+            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-x64.zip
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Preparations for windows runner
-        if: startsWith(matrix.os, 'windows')
-        run: echo "JPACKAGE_OS_OPTS=--win-console" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '22'
-          distribution: 'zulu'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
       - name: Set version
         run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
       - name: Run maven
@@ -124,22 +102,23 @@ jobs:
           --app-version "${{ needs.prepare.outputs.semVerNum }}"
           --java-options "-Dorg.cryptomator.cli.version=${{ needs.prepare.outputs.semVerStr }}"
           --java-options "--enable-preview"
-          --java-options "--enable-native-access=${{ matrix.native-access-lib }}"
+          --java-options "--enable-native-access=org.cryptomator.jfuse.mac"
           --java-options "-Xss5m"
           --java-options "-Xmx256m"
           --java-options "-Dfile.encoding=\"utf-8\""
-          ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
-          name: cryptomator-cli-${{matrix.suffix}}-${{matrix.architecture}}
-          path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
+          name: cryptomator-cli-mac-${{ matrix.architecture }}
+          path: ./target/cryptomator-cli.app
           if-no-files-found: error
+      - name: TODO sign binaries
+        run: echo "TODO sign it and notarize it"
       - name: Zip binary for release
-        run: zip -r ./target/cryptomator-cli${{ matrix.binary-dir-suffix }} ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+        run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ matrix.artifact-name }}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
@@ -150,6 +129,6 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-${{matrix.suffix}}-${{matrix.architecture}}.zip
+            ${{ matrix.artifact-name }}
             cryptomator-cli-*.asc
 
