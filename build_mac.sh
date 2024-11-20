@@ -29,15 +29,8 @@ mv ./target/cryptomator-cli-*.jar ./target/mods
 
 echo "Creating JRE with jlink..."
 "$JAVA_HOME/bin/jlink" \
-    --verbose \
-    --output target/runtime \
-    --module-path "${JAVA_HOME}/jmods" \
-    --add-modules java.base,java.compiler,java.naming,java.xml \
-    --strip-native-commands \
-    --no-header-files \
-    --no-man-pages \
-    --strip-debug \
-    --compress zip-0
+    '@./dist/jlink.args' \
+    --module-path "${JAVA_HOME}/jmods"
 
 if [ $? -ne 0 ] || [ ! -d ./target/runtime ]; then
     echo "JRE creation with jlink failed."
