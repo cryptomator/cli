@@ -1,4 +1,4 @@
-name: Build java app image
+name: Java app image Windows
 
 on:
   release:
@@ -33,10 +33,10 @@ jobs:
         shell: pwsh
         run: |
           if ( '${{github.event_name}}' -eq 'release') {
-            echo "version=${{ github.event.release.tag_name}}" >> "$GITHUB_OUTPUT"
+            echo 'version=${{ github.event.release.tag_name}}' >> "$env:GITHUB_OUTPUT"
             exit 0
           } elseif ('${{inputs.sem-version}}') {
-            echo "version=${{ inputs.sem-version}}" >> "$GITHUB_OUTPUT"
+            echo 'version=${{ inputs.sem-version}}' >> "$env:GITHUB_OUTPUT"
             exit 0
           }
           Write-Error "Version neither via input nor by tag specified. Aborting"
@@ -49,63 +49,38 @@ jobs:
   build-binary:
     name: Build java app image
     needs: [prepare]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
-            binary-dir-suffix: ""
-          - os: [self-hosted, Linux, ARM64]
-            architecture: aarch64
-            native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
-            binary-dir-suffix: ""
-          - os: macos-latest-large
-            architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.mac'
-            binary-dir-suffix: ".app"
-          - os: macos-latest
-            architecture: aarch64
-            native-access-lib: 'org.cryptomator.jfuse.mac'
-            binary-dir-suffix: ".app"
-          - os: windows-latest
-            architecture: x64
-            native-access-lib: 'org.cryptomator.jfuse.win'
-            binary-dir-suffix: ""
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
+    env:
+        artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-win-x64.zip
     steps:
-      - name: Preparations for windows runner
-        if: startsWith(matrix.os, 'windows')
-        run: echo "JPACKAGE_OS_OPTS=--win-console" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '22'
-          distribution: 'zulu'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
       - name: Set version
         run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
       - name: Run maven
-        run: mvn -B clean package -Pwin -DskipTests
+        run: mvn -B clean package -DskipTests
       - name: Patch target dir
         run: |
           cp LICENSE.txt target
           cp target/cryptomator-*.jar target/mods
       - name: Run jlink
         run: >
-          ${JAVA_HOME}/bin/jlink
+          "${JAVA_HOME}/bin/jlink"
           --verbose
           --output target/runtime
           --module-path "${JAVA_HOME}/jmods"
-          --add-modules java.base,java.compiler,java.naming,java.xml `
-          --strip-native-commands `
-          --no-header-files `
-          --no-man-pages `
-          --strip-debug `
+          --add-modules java.base,java.compiler,java.naming,java.xml
+          --strip-native-commands
+          --no-header-files
+          --no-man-pages
+          --strip-debug
           --compress zip-6
       - name: Run jpackage
         run: >
-          ${JAVA_HOME}/bin/jpackage
+          "${JAVA_HOME}/bin/jpackage"
           --verbose
           --type app-image
           --runtime-image target/runtime
@@ -118,23 +93,25 @@ jobs:
           --copyright "(C) 2016 - 2024 Skymatic GmbH"
           --app-version "${{ needs.prepare.outputs.semVerNum }}"
           --java-options "-Dorg.cryptomator.cli.version=${{ needs.prepare.outputs.semVerStr }}"
-          --java-options "--enable-preview"
-          --java-options "--enable-native-access=${{ matrix.native-access-lib }}"
+          --java-options "--enable-native-access=org.cryptomator.jfuse.win"
           --java-options "-Xss5m"
           --java-options "-Xmx256m"
           --java-options "-Dfile.encoding=\"utf-8\""
-          ${JPACKAGE_OS_OPTS}
+          --win-console
       - uses: actions/upload-artifact@v4
         with:
-          path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
+          name: cryptomator-cli-win-x64
+          path: ./target/cryptomator-cli
           if-no-files-found: error
+      - name: TODO Sign binaries
+        run: echo TODO
       - name: Zip binary for release
-        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
-        run: zip -r ./target/cryptomator-cli${{ matrix.binary-dir-suffix }} ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+        shell: pwsh
+        run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ env.artifact-name}}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
@@ -145,6 +122,6 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}.zip
+            ${{ env.artifact-name}}
             cryptomator-cli-*.asc
 
