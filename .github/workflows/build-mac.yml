@@ -28,7 +28,11 @@ jobs:
     outputs:
       semVerStr: ${{ steps.determine-version.outputs.version }}
       semVerNum: ${{steps.determine-number.outputs.number}}
+      revisionNum: ${{steps.determine-number.outputs.revision}}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: determine-version
         shell: pwsh
         run: |
@@ -45,6 +49,8 @@ jobs:
         run: |
           SEM_VER_NUM=$(echo "${{ steps.determine-version.outputs.version }}" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
           echo "number=${SEM_VER_NUM}" >> "$GITHUB_OUTPUT"
+          REVISION_NUM=`git rev-list --count HEAD`
+          echo "revision=${REVISION_NUM}" >> "$GITHUB_OUTPUT"
 
   build-binary:
     name: Build java app image
@@ -110,10 +116,76 @@ jobs:
           name: cryptomator-cli-mac-${{ matrix.architecture }}
           path: ./target/cryptomator-cli.app
           if-no-files-found: error
-      - name: TODO sign binaries
-        run: echo "TODO sign it and notarize it"
+      - name: Patch Cryptomator.app
+        run: |
+          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" ./target/Cryptomator.app/Contents/Info.plist
+          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" ./target/Cryptomator.app/Contents/Info.plist
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output ./target/Cryptomator.app/Contents/embedded.provisionprofile
+        env:
+          VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
+          REVISION_NO: ${{ needs.prepare.outputs.revisionNum }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+      - name: Install codesign certificate
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/codesign.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/codesign.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$CODESIGN_P12_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$CODESIGN_TMP_KEYCHAIN_PW" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 900 $KEYCHAIN_PATH
+          security unlock-keychain -p "$CODESIGN_TMP_KEYCHAIN_PW" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$CODESIGN_P12_PW" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+        env:
+          CODESIGN_P12_BASE64: ${{ secrets.MACOS_CODESIGN_P12_BASE64 }}
+          CODESIGN_P12_PW: ${{ secrets.MACOS_CODESIGN_P12_PW }}
+          CODESIGN_TMP_KEYCHAIN_PW: ${{ secrets.MACOS_CODESIGN_TMP_KEYCHAIN_PW }}
+      - name: Codesign
+        run: |
+          echo "Codesigning jdk files..."
+          find ./target/cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          find ./target/cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ \( -name 'jspawnhelper' -o -name 'pauseengine' -o -name 'simengine' \) -exec codesign --force -o runtime -s ${CODESIGN_IDENTITY} {} \;
+          echo "Codesigning jar contents..."
+          find ./target/cryptomator-cli.app/Contents/runtime/Contents/MacOS -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          for JAR_PATH in `find ./target/cryptomator-cli.app -name "*.jar"`; do
+            if [[ `unzip -l ${JAR_PATH} | grep '.dylib\|.jnilib'` ]]; then
+              JAR_FILENAME=$(basename ${JAR_PATH})
+              OUTPUT_PATH=${JAR_PATH%.*}
+              echo "Codesigning libs in ${JAR_FILENAME}..."
+              unzip -q ${JAR_PATH} -d ${OUTPUT_PATH}
+              find ${OUTPUT_PATH} -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+              find ${OUTPUT_PATH} -name '*.jnilib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+              rm ${JAR_PATH}
+              pushd ${OUTPUT_PATH} > /dev/null
+              zip -qr ../${JAR_FILENAME} *
+              popd > /dev/null
+              rm -r ${OUTPUT_PATH}
+            fi
+          done
+          echo "Codesigning Cryptomator.app..."
+          sed -i '' "s|###APP_IDENTIFIER_PREFIX###|${TEAM_IDENTIFIER}.|g" dist/mac/cryptomator-cli.entitlements
+          sed -i '' "s|###TEAM_IDENTIFIER###|${TEAM_IDENTIFIER}|g" dist/mac/cryptomator-cli.entitlements
+          codesign --force --deep --entitlements dist/mac/cryptomator-cli.entitlements -o runtime -s ${CODESIGN_IDENTITY} ./target/cryptomator-cli.app
+        env:
+          CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+          TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
       - name: Zip binary for release
         run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
+      - name: Notarize .dmg
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: cocoalibs/xcode-notarization-action@v1
+        with:
+          app-path: ${{ matrix.artifact-name }}
+          apple-id: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          password: ${{ secrets.MACOS_NOTARIZATION_PW }}
+          team-id: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+          xcode-path: '/Applications/Xcode_16.app'
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
