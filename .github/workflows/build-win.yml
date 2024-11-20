@@ -61,14 +61,14 @@ jobs:
       - name: Set version
         run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
       - name: Run maven
-        run: mvn -B clean package -Pwin -DskipTests
+        run: mvn -B clean package -DskipTests
       - name: Patch target dir
         run: |
           cp LICENSE.txt target
           cp target/cryptomator-*.jar target/mods
       - name: Run jlink
         run: >
-          ${JAVA_HOME}/bin/jlink
+          "${JAVA_HOME}/bin/jlink"
           --verbose
           --output target/runtime
           --module-path "${JAVA_HOME}/jmods"
@@ -80,7 +80,7 @@ jobs:
           --compress zip-6
       - name: Run jpackage
         run: >
-          ${JAVA_HOME}/bin/jpackage
+          "${JAVA_HOME}/bin/jpackage"
           --verbose
           --type app-image
           --runtime-image target/runtime
@@ -93,7 +93,6 @@ jobs:
           --copyright "(C) 2016 - 2024 Skymatic GmbH"
           --app-version "${{ needs.prepare.outputs.semVerNum }}"
           --java-options "-Dorg.cryptomator.cli.version=${{ needs.prepare.outputs.semVerStr }}"
-          --java-options "--enable-preview"
           --java-options "--enable-native-access=org.cryptomator.jfuse.win"
           --java-options "-Xss5m"
           --java-options "-Xmx256m"
@@ -105,8 +104,7 @@ jobs:
           path: ./target/cryptomator-cli
           if-no-files-found: error
       - name: TODO Sign binaries
-        run: echo TODO; exit 1;
-        #TODO
+        run: echo TODO
       - name: Zip binary for release
         shell: pwsh
         run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
