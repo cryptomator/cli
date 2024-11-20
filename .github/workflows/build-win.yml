@@ -110,7 +110,7 @@ jobs:
         shell: pwsh
         run: |
           Add-Type -AssemblyName "System.io.compression.filesystem"
-          $jarFolder = Resolve-Path ".\target\Cryptomator-clie\app\mods"
+          $jarFolder = Resolve-Path ".\target\Cryptomator-cli\app\mods"
           $jarExtractDir = New-Item -Path ".\target\jar-extract" -ItemType Directory
 
           #for all jars inspect
