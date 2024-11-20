@@ -131,7 +131,7 @@ jobs:
           ${JPACKAGE_OS_OPTS}
       - uses: actions/upload-artifact@v4
         with:
-          name: cryptomator-cli-${{matrix.suffix}}
+          name: cryptomator-cli-${{matrix.suffix}}-${{matrix.architecture}}
           path: ./target/cryptomator-cli${{ matrix.binary-dir-suffix }}
           if-no-files-found: error
       - name: Zip binary for release
