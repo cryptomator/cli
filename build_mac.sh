@@ -30,9 +30,8 @@ cp ./LICENSE.txt ./target/
 mv ./target/cryptomator-cli-*.jar ./target/mods
 
 echo "Creating JRE with jlink..."
-"$JAVA_HOME/bin/jlink" \
-    '@./dist/jlink.args' \
-    --module-path "${JAVA_HOME}/jmods"
+envsubst < dist/jlink.args > target/jlink.args
+"$JAVA_HOME/bin/jlink" '@./target/jlink.args'
 
 if [ $? -ne 0 ] || [ ! -d ./target/runtime ]; then
     echo "JRE creation with jlink failed."

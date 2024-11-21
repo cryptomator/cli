@@ -1,4 +1,5 @@
 --verbose
+--module-path "${JAVA_HOME}/jmods"
 --output target/runtime
 --add-modules java.base,java.compiler,java.naming,java.xml
 --strip-native-commands
