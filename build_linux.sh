@@ -3,6 +3,8 @@ set -euxo pipefail
 
 echo "Building cryptomator cli..."
 
+APP_VERSION='0.1.0-local'
+
 # Check if Maven is installed
 if ! command -v mvn &> /dev/null; then
     echo "Maven is not installed. Please install Maven to proceed."
@@ -52,10 +54,11 @@ if (echo "$_OS" | grep -q "Linux.*") ; then
     fi
 fi
 
+JP_APP_VERSION='99.9.9'
+envsubst < dist/jpackage.args > target/jpackage.args
+
 echo "Creating app binary with jpackage..."
-"$JAVA_HOME/bin/jpackage" \
-    '@./dist/jpackage.args' \
-    --java-options "--enable-native-access=${NATIVE_ACCESS_PACKAGE}"
+"$JAVA_HOME/bin/jpackage" '@./target/jpackage.args'
 
 if [ $? -ne 0 ] || [ ! -d ./target/cryptomator-cli ]; then
     echo "Binary creation with jpackage failed."

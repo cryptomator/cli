@@ -1,5 +1,7 @@
 "Building cryptomator cli..."
 
+$appVersion='0.1.0-local'
+
 # Check if maven is installed
 $commands = 'mvn'
 foreach ($cmd in $commands) {
@@ -32,13 +34,18 @@ if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/runtime))) {
     throw "JRE creation with jLink failed with exit code $LASTEXITCODE."
 }
 
+## powershell does not have envsubst
+$jpAppVersion='99.9.9'
+Get-Content -Path './dist/jpackage.args' | ForEach-Object {
+    $_.Replace('${APP_VERSION}', $appVersion)
+    .Replace('${JP_APP_VERSION}', $jpAppVersion)
+    .Replace('${NATIVE_ACCESS_PACKAGE}', 'org.cryptomator.jfuse.win')
+} | Out-File -FilePath './target/jpackage.args'
+
 # jpackage
 # app-version is hard coded, since the script is only for local test builds
 Write-Host "Creating app binary with jpackage..."
-& $env:JAVA_HOME/bin/jpackage `
-    `@./dist/jpackage.args `
-    --java-options "--enable-native-access=org.cryptomator.jfuse.win" `
-    --win-console
+& $env:JAVA_HOME/bin/jpackage `@./target/jpackage.args --win-console
 
 if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/cryptomator-cli))) {
     throw "Binary creation with jpackage failed with exit code $LASTEXITCODE."
