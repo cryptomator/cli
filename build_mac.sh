@@ -2,7 +2,7 @@
 
 echo "Building cryptomator cli..."
 
-APP_VERSION='0.1.0-local'
+export APP_VERSION='0.1.0-local'
 
 # Check if Maven is installed
 if ! command -v mvn &> /dev/null; then
@@ -38,7 +38,8 @@ if [ $? -ne 0 ] || [ ! -d ./target/runtime ]; then
     exit 1
 fi
 
-JP_APP_VERSION='99.9.9'
+export JP_APP_VERSION='99.9.9'
+export NATIVE_ACCESS_PACKAGE="org.cryptomator.jfuse.mac"
 envsubst < dist/jpackage.args > target/jpackage.args
 
 echo "Creating app binary with jpackage..."
