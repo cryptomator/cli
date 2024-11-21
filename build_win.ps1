@@ -14,9 +14,9 @@ if(-not $env:JAVA_HOME) {
 }
 
 # Check Java version
-$minJavaVersion=$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
+$minJavaVersion=[int]$(mvn help:evaluate "-Dexpression=jdk.version" -q -DforceStdout)
 $javaVersion = $(& "$env:JAVA_HOME\bin\java" --version) -split ' ' | Select-Object -Index 1
-if( ($javaVersion.Split('.') | Select-Object -First 1) -ne "22") {
+if( ([int] ($javaVersion.Split('.') | Select-Object -First 1)) -lt $minJavaVersion) {
     throw "Java version $javaVersion is too old. Minimum required version is $minJavaVersion"
 }
 
@@ -42,7 +42,6 @@ Get-Content -Path './dist/jpackage.args' | ForEach-Object {
 } | Out-File -FilePath './target/jpackage.args'
 
 # jpackage
-# app-version is hard coded, since the script is only for local test builds
 Write-Host "Creating app binary with jpackage..."
 & $env:JAVA_HOME/bin/jpackage `@./target/jpackage.args --win-console
 
