@@ -83,7 +83,7 @@ jobs:
       - name: Run jpackage
         run: |
           envsubst < dist/jpackage.args > target/jpackage.args
-          "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args' --win-console
+          "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args'
         env:
           JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
           APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
