@@ -114,7 +114,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: cryptomator-cli-mac-${{ matrix.architecture }}
-          path: ./target/cryptomator-cli.app
+          path: ./target/cryptomator-cli*.app #Cheat to include the parent *app dir in the archive
           if-no-files-found: error
       - name: Patch .app dir
         run: |
