@@ -11,6 +11,7 @@ on:
       notarize:
         description: 'Notarize app'
         required: false
+        type: boolean
 
 permissions:
   contents: write
