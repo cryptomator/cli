@@ -8,6 +8,9 @@ on:
       sem-version:
         description: 'Version'
         required: false
+      notarize:
+        description: 'Notarize app'
+        required: false
 
 permissions:
   contents: write
@@ -111,11 +114,6 @@ jobs:
           --java-options "-Xss5m"
           --java-options "-Xmx256m"
           --java-options "-Dfile.encoding=\"utf-8\""
-      - uses: actions/upload-artifact@v4
-        with:
-          name: cryptomator-cli-mac-${{ matrix.architecture }}
-          path: ./target/cryptomator-cli*.app #Cheat to include the parent *app dir in the archive
-          if-no-files-found: error
       - name: Patch .app dir
         run: |
           sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" ./target/cryptomator-cli.app/Contents/Info.plist
@@ -178,7 +176,7 @@ jobs:
       - name: Zip binary for release
         run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
       - name: Notarize .dmg
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.notarize
         uses: cocoalibs/xcode-notarization-action@v1
         with:
           app-path: ${{ matrix.artifact-name }}
@@ -193,6 +191,13 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptomator-cli-mac-${{ matrix.architecture }}
+          path: |
+            ${{ matrix.artifact-name}}
+            *.asc
+          if-no-files-found: error
       - name: Publish artefact on GitHub Releases
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
