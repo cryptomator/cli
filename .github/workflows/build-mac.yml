@@ -177,7 +177,7 @@ jobs:
         working-directory: target
       - name: Zip binary for notarization
         if: inputs.notarize
-        run: ditto -c -k ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+        run: ditto -c -k --keep-parent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
       - name: Setup Xcode
         if: inputs.notarize
         run: sudo xcode-select -s /Applications/Xcode_16.app
@@ -213,7 +213,7 @@ jobs:
         shell: bash
         continue-on-error: true
       - name: Zip app for distribution
-        run: ditto -c -k ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+        run: ditto -c -k --keep-parent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
