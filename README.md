@@ -25,9 +25,9 @@ Afterward, you can directly run Cryptomator-CLI by calling the binary, e.g. on L
 
 To unmount, send a SIGTERM signal to the process, e.g. by pressing CTRL+C (macOS: CMD+C) in the terminal.
 
-For a complete list of options, use the`--help` option.
+For a complete list of options, use the `--help` option.
 ```shell
-cryptomator-cli --help`
+cryptomator-cli --help
 ```
 
 ## Filesystem Integration
