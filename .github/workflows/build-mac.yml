@@ -102,7 +102,7 @@ jobs:
         run: |
           sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
-          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output cryptomator-cli.app/Contents/embedded.provisionprofile
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output "cryptomator-cli.app/Contents/embedded.provisionprofile"
         working-directory: target
         env:
           VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
