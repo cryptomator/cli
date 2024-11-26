@@ -66,9 +66,11 @@ jobs:
           - os: macos-latest
             architecture: arm64
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-arm64.zip
+            xcode-path: /Applications/Xcode_15.2.app
           - os: macos-13
             architecture: x64
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-x64.zip
+            xcode-path: /Applications/Xcode_16.app
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -163,7 +165,7 @@ jobs:
         run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
       - name: Setup Xcode
         if: inputs.notarize
-        run: sudo xcode-select -s /Applications/Xcode_16.app
+        run: sudo xcode-select -s ${{ matrix.xcode-path}}
         shell: bash
         #would like to uses cocoalibs/xcode-notarization-action@v1, but blocked due to https://github.com/cocoalibs/xcode-notarization-action/issues/1
       - name: Prepare Notarization Credentials
