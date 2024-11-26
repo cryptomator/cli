@@ -78,13 +78,50 @@ jobs:
           JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
           APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.win
-      - uses: actions/upload-artifact@v4
+      - name: Fix permissions
+        run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
+        shell: pwsh
+      - name: Extract jars with DLLs for Codesigning
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName "System.io.compression.filesystem"
+          $jarFolder = Resolve-Path ".\target\Cryptomator-cli\app\mods"
+          $jarExtractDir = New-Item -Path ".\target\jar-extract" -ItemType Directory
+
+          #for all jars inspect
+          Get-ChildItem -Path $jarFolder -Filter "*.jar" | ForEach-Object {
+              $jar = [Io.compression.zipfile]::OpenRead($_.FullName)
+              if (@($jar.Entries | Where-Object {$_.Name.ToString().EndsWith(".dll")} | Select-Object -First 1).Count -gt 0) {
+                  #jars containing dlls extract
+                  Set-Location $jarExtractDir
+                  Expand-Archive -Path $_.FullName
+              }
+              $jar.Dispose()
+          }
+      - name: Codesign
+        uses: skymatic/code-sign-action@v3
         with:
-          name: cryptomator-cli-win-x64
-          path: ./target/cryptomator-cli
-          if-no-files-found: error
-      - name: TODO Sign binaries
-        run: echo TODO
+          certificate: ${{ secrets.WIN_CODESIGN_P12_BASE64 }}
+          password: ${{ secrets.WIN_CODESIGN_P12_PW }}
+          certificatesha1: ${{ vars.WIN_CODESIGN_CERT_SHA1 }}
+          description: Cryptomator
+          timestampUrl: 'http://timestamp.digicert.com'
+          folder: target
+          recursive: true
+      - name: Replace DLLs inside jars with signed ones
+        shell: pwsh
+        run: |
+          $jarExtractDir = Resolve-Path ".\target\jar-extract"
+          $jarFolder = Resolve-Path ".\target\cryptomator-cli\app\mods"
+          Get-ChildItem -Path $jarExtractDir | ForEach-Object {
+              $jarName = $_.Name
+              $jarFile = "${jarFolder}\${jarName}.jar"
+              Set-Location $_
+              Get-ChildItem -Path $_ -Recurse -File "*.dll" | ForEach-Object {
+                  # update jar with signed dll
+                  jar --file="$jarFile" --update $(Resolve-Path -Relative -Path $_)
+              }
+          }
       - name: Zip binary for release
         shell: pwsh
         run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
@@ -95,6 +132,13 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptomator-cli-win-x64
+          path: |
+            ${{ env.artifact-name}}
+            *.asc
+          if-no-files-found: error
       - name: Publish artefact on GitHub Releases
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
