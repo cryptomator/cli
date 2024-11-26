@@ -169,6 +169,8 @@ jobs:
           sed -i '' "s|###TEAM_IDENTIFIER###|${TEAM_IDENTIFIER}|g" ../dist/mac/cryptomator-cli.entitlements
           codesign --force --deep --entitlements ../dist/mac/cryptomator-cli.entitlements -o runtime -s ${CODESIGN_IDENTITY} cryptomator-cli.app
           codesign -vvv --deep --strict cryptomator-cli.app
+          codesign -vvv --deep --strict cryptomator-cli.app/Contents/runtime/Contents/MacOS/libjli.dylib
+          codesign -vvv --deep --strict cryptomator-cli.app/Contents/MacOS/cryptomator-cli
         env:
           CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
           TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
