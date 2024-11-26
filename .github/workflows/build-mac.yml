@@ -66,9 +66,6 @@ jobs:
           - os: macos-latest
             architecture: arm64
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-arm64.zip
-          - os: macos-13
-            architecture: x64
-            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-x64.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
