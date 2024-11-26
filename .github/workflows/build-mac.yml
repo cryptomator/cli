@@ -66,6 +66,9 @@ jobs:
           - os: macos-latest
             architecture: arm64
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-arm64.zip
+          - os: macos-13
+            architecture: x64
+            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-x64.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -95,9 +98,10 @@ jobs:
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.mac
       - name: Patch .app dir
         run: |
-          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" ./target/cryptomator-cli.app/Contents/Info.plist
-          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" ./target/cryptomator-cli.app/Contents/Info.plist
-          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output ./target/cryptomator-cli.app/Contents/embedded.provisionprofile
+          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
+          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output cryptomator-cli.app/Contents/embedded.provisionprofile
+        working-directory: target
         env:
           VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
           REVISION_NO: ${{ needs.prepare.outputs.revisionNum }}
