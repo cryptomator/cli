@@ -98,11 +98,6 @@ jobs:
           --java-options "-Xmx256m"
           --java-options "-Dfile.encoding=\"utf-8\""
           --win-console
-      - uses: actions/upload-artifact@v4
-        with:
-          name: cryptomator-cli-win-x64
-          path: ./target/cryptomator-cli
-          if-no-files-found: error
       - name: Fix permissions
         run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
         shell: pwsh
@@ -157,6 +152,13 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptomator-cli-win-x64
+          path: |
+            ${{ env.artifact-name}}
+            *.asc
+          if-no-files-found: error
       - name: Publish artefact on GitHub Releases
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
         uses: softprops/action-gh-release@v2
