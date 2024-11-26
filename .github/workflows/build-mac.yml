@@ -148,11 +148,11 @@ jobs:
       - name: Codesign
         run: |
           echo "Codesigning jdk files..."
-          find ./target/cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
-          find ./target/cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ \( -name 'jspawnhelper' -o -name 'pauseengine' -o -name 'simengine' \) -exec codesign --force -o runtime -s ${CODESIGN_IDENTITY} {} \;
+          find cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          find cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ \( -name 'jspawnhelper' -o -name 'pauseengine' -o -name 'simengine' \) -exec codesign --force -o runtime -s ${CODESIGN_IDENTITY} {} \;
           echo "Codesigning jar contents..."
-          find ./target/cryptomator-cli.app/Contents/runtime/Contents/MacOS -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
-          for JAR_PATH in `find ./target/cryptomator-cli.app -name "*.jar"`; do
+          find cryptomator-cli.app/Contents/runtime/Contents/MacOS -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          for JAR_PATH in `find cryptomator-cli.app -name "*.jar"`; do
             if [[ `unzip -l ${JAR_PATH} | grep '.dylib\|.jnilib'` ]]; then
               JAR_FILENAME=$(basename ${JAR_PATH})
               OUTPUT_PATH=${JAR_PATH%.*}
@@ -167,13 +167,14 @@ jobs:
               rm -r ${OUTPUT_PATH}
             fi
           done
-          echo "Codesigning Cryptomator.app..."
-          sed -i '' "s|###APP_IDENTIFIER_PREFIX###|${TEAM_IDENTIFIER}.|g" dist/mac/cryptomator-cli.entitlements
-          sed -i '' "s|###TEAM_IDENTIFIER###|${TEAM_IDENTIFIER}|g" dist/mac/cryptomator-cli.entitlements
-          codesign --force --deep --entitlements dist/mac/cryptomator-cli.entitlements -o runtime -s ${CODESIGN_IDENTITY} ./target/cryptomator-cli.app
+          echo "Codesigning Cryptomator-cli.app..."
+          sed -i '' "s|###APP_IDENTIFIER_PREFIX###|${TEAM_IDENTIFIER}.|g" ../dist/mac/cryptomator-cli.entitlements
+          sed -i '' "s|###TEAM_IDENTIFIER###|${TEAM_IDENTIFIER}|g" ../dist/mac/cryptomator-cli.entitlements
+          codesign --force --deep --entitlements ../dist/mac/cryptomator-cli.entitlements -o runtime -s ${CODESIGN_IDENTITY} cryptomator-cli.app
         env:
           CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
           TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
+        working-directory: target
       - name: Zip binary for notarization
         if: inputs.notarize
         run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
