@@ -174,16 +174,44 @@ jobs:
         env:
           CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
           TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
-      - name: Notarize .dmg
-        if: startsWith(github.ref, 'refs/tags/') || inputs.notarize
-        uses: cocoalibs/xcode-notarization-action@v1
-        with:
-          app-path: target/cryptomator-cli.app
-          apple-id: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
-          password: ${{ secrets.MACOS_NOTARIZATION_PW }}
-          team-id: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
-          xcode-path: '/Applications/Xcode_16.app'
-      - name: Zip binary
+      - name: Zip binary for notarization
+        if: inputs.notarize
+        run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
+      - name: Setup Xcode
+        if: inputs.notarize
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+        shell: bash
+        #would like to uses cocoalibs/xcode-notarization-action@v1, but blocked due to https://github.com/cocoalibs/xcode-notarization-action/issues/1
+      - name: Prepare Notarization Credentials
+        if: inputs.notarize
+        run: |
+          # create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
+          KEYCHAIN_PASS=$(uuidgen)
+          security create-keychain -p "${KEYCHAIN_PASS}" ${KEYCHAIN_PATH}
+          security set-keychain-settings -lut 900 ${KEYCHAIN_PATH}
+          security unlock-keychain -p "${KEYCHAIN_PASS}" ${KEYCHAIN_PATH}
+          # import credentials from secrets
+          xcrun notarytool store-credentials "notary" --apple-id "${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}" --password "${{ secrets.MACOS_NOTARIZATION_PW }}" --team-id "${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}" --keychain "${KEYCHAIN_PATH}"
+        shell: bash
+      - name: Notarize
+        if: inputs.notarize
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
+          xcrun notarytool submit ${{ matrix.artifact-name }} --keychain-profile "notary" --keychain "${KEYCHAIN_PATH}" --wait
+        shell: bash
+      - name: Staple
+        if: inputs.notarize
+        run: xcrun stapler staple ./target/cryptomator-cli.app
+        shell: bash
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          rm -f ./${{ matrix.artifact-name}}
+          security delete-keychain $RUNNER_TEMP/notarization.keychain-db
+        shell: bash
+        continue-on-error: true
+      - name: Zip app for distribution
         run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli.app
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
