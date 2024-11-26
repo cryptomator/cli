@@ -102,7 +102,7 @@ jobs:
         run: |
           sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
-          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode --output "cryptomator-cli.app/Contents/embedded.provisionprofile"
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "cryptomator-cli.app/Contents/embedded.provisionprofile"
         working-directory: target
         env:
           VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
@@ -115,7 +115,7 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/codesign.keychain-db
 
           # import certificate and provisioning profile from secrets
-          echo -n "$CODESIGN_P12_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          echo -n "$CODESIGN_P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
 
           # create temporary keychain
           security create-keychain -p "$CODESIGN_TMP_KEYCHAIN_PW" $KEYCHAIN_PATH
