@@ -17,17 +17,13 @@
 		<!-- Group IDs of jars that need to stay on the class path for now
 		 remove them, as soon they got modularized or support is dropped (i.e., WebDAV) -->
 		<nonModularGroupIds>org.ow2.asm,org.apache.jackrabbit,org.apache.httpcomponents</nonModularGroupIds>
-
-
-		<!-- native image options -->
 		<mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
-		<native.optimization>-Ob</native.optimization> <!-- default: no optimization/dev build-->
 
 		<!-- runtime dependencies -->
-		<cryptofs.version>2.7.0-beta1</cryptofs.version>
-		<webdav-nio.version>2.0.6</webdav-nio.version>
-		<fuse-nio.version>5.0.0</fuse-nio.version>
-		<logback.version>1.5.6</logback.version>
+		<cryptofs.version>2.7.0</cryptofs.version>
+		<webdav-nio.version>2.0.7</webdav-nio.version>
+		<fuse-nio.version>5.0.2</fuse-nio.version>
+		<logback.version>1.5.12</logback.version>
 		<slf4j.version>2.0.16</slf4j.version>
 
 		<!-- build dependencies -->
