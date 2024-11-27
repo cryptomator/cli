@@ -95,7 +95,7 @@ jobs:
           envsubst < dist/jpackage.args > target/jpackage.args
           "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args'
         env:
-          JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
+          JP_APP_VERSION: '1.0.0' # see https://github.com/cryptomator/cli/issues/72
           APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.mac
       - name: Patch .app dir
