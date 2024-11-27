@@ -14,7 +14,7 @@ curl -L https://github.com/cryptomator/cli/releases/download/0.7.0/cryptomator-c
 unzip cryptomator-cli.zip
 ```
 
-Afterward, you can directly run Cryptomator-CLI by calling the binary, e.g. on Linux:
+Afterward, you can directly run Cryptomator-CLI by calling the binary from a terminal, e.g. on Linux:
 ```shell
 ./cryptomator-cli/cryptomator-cli unlock \
 --password:stdin \
@@ -22,6 +22,8 @@ Afterward, you can directly run Cryptomator-CLI by calling the binary, e.g. on L
 --mountPoint=/path/to/empty/dir \
 /home/user/myVault
 ```
+> [!NOTE]
+> On macOS, the path to the binary is `cryptomator-cli.app/Contents/MacOS/cryptomator-cli`
 
 To unmount, send a SIGTERM signal to the process, e.g. by pressing CTRL+C (macOS: CMD+C) in the terminal.
 
@@ -40,7 +42,7 @@ These are:
 
 As a fallback, you can [skip filesystem integration](README.md#skip-filesystem-integration) by using WebDAV.
 
-## Selecting the Mounter
+### Selecting the Mounter
 
 To list all available mounters, use the `list-mounters` subcommand:
 ```shell
@@ -48,7 +50,7 @@ cryptomator-cli list-mounters
 ```
 Pick one from the printed list and use it as input for the `--mounter` option.
 
-## Skip Filesystem Integration 
+### Skip Filesystem Integration 
 
 If you don't want a direct integration in the OS, choose `org.cryptomator.frontend.webdav.mount.FallbackMounter` for `--mounter`.
 It starts a local WebDAV server, where you can access the vault with any WebDAV client or mounting it into your filesystem manually.
@@ -57,7 +59,7 @@ It starts a local WebDAV server, where you can access the vault with any WebDAV 
 > The WebDAV protocol is supported by all major OSses. Hence, if other mounters fail or show errors when accessing the vault content, you can always use the legacy WebDAV option.
 > WebDAV is not the default, because it has a low performance and might have OS dependent restrictions (e.g. maximum file size of 4GB on Windows)
 
-### Windows via Windows Explorer
+#### Windows via Windows Explorer
 
 Open the File Explorer, right click on "This PC" and click on the menu item "Map network drive...".
 
@@ -65,7 +67,7 @@ Open the File Explorer, right click on "This PC" and click on the menu item "Map
 2. In the Folder box, enter the URL logged by the Cryptomator CLI application.
 3. Select Finish.
 
-### Linux via davfs2
+#### Linux via davfs2
 
 First, you need to create a mount point for your vault:
 
@@ -86,7 +88,7 @@ To unmount the vault, run:
 sudo umount /media/your/mounted/folder
 ```
 
-### macOS via AppleScript
+#### macOS via AppleScript
 
 Mount the vault with:
 ```sh
