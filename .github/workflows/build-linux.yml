@@ -74,7 +74,6 @@ jobs:
         run: mvn -B clean package -DskipTests
       - name: Patch target dir
         run: |
-          cp LICENSE.txt target
           cp target/cryptomator-*.jar target/mods
       - name: Run jlink
         run: |
@@ -88,6 +87,10 @@ jobs:
           JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
           APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
           NATIVE_ACCESS_PACKAGE: ${{ matrix.native-access-lib }}
+      - name: Update app dir
+        run: |
+          cp LICENSE.txt target/cryptomator-cli
+          cp target/cryptomator-cli_completion.sh target/cryptomator-cli
       - uses: actions/upload-artifact@v4
         with:
           name: cryptomator-cli-linux-${{ matrix.architecture }}

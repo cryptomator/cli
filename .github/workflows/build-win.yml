@@ -78,6 +78,10 @@ jobs:
           JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
           APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.win
+      - name: Update app dir
+        run: |
+          cp LICENSE.txt target/cryptomator-cli
+          cp target/cryptomator-cli_completion.sh target/cryptomator-cli
       - name: Fix permissions
         run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
         shell: pwsh

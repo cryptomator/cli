@@ -84,7 +84,6 @@ jobs:
         run: mvn -B clean package -DskipTests
       - name: Patch target dir
         run: |
-          cp LICENSE.txt target
           cp target/cryptomator-*.jar target/mods
       - name: Run jlink
         run: |
@@ -100,6 +99,8 @@ jobs:
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.mac
       - name: Patch .app dir
         run: |
+          cp LICENSE.txt target/cryptomator-cli.app
+          cp target/cryptomator-cli_completion.sh target/cryptomator-cli.app
           sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "cryptomator-cli.app/Contents/embedded.provisionprofile"
