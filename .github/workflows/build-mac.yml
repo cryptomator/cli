@@ -99,8 +99,8 @@ jobs:
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.mac
       - name: Patch .app dir
         run: |
-          cp ../LICENSE.txt cryptomator-cli.app
-          cp cryptomator-cli_completion.sh cryptomator-cli.app
+          cp ../LICENSE.txt cryptomator-cli.app/Contents
+          cp cryptomator-cli_completion.sh cryptomator-cli.app/Contents
           sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "cryptomator-cli.app/Contents/embedded.provisionprofile"
