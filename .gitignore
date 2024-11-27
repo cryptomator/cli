@@ -22,3 +22,6 @@ out/
 
 #mvn shade plugin artifact
 dependency-reduced-pom.xml
+
+# mvn versions:set backup
+pom.xml.versionsBackup
