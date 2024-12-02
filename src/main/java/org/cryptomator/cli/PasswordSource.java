@@ -60,7 +60,7 @@ public class PasswordSource {
             charWrapper = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(fileContent));
             //strips newline, since most files on linux end with a new line
             var length = charWrapper.limit();
-            if(charWrapper.get(length) == '\n') {
+            if(charWrapper.get(length - 1) == '\n') {
                length--;
             }
             char[] content = new char[length];
