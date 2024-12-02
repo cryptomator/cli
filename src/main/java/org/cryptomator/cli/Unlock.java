@@ -84,7 +84,7 @@ public class Unlock implements Callable<Integer> {
 
         try (var fs = CryptoFileSystemProvider.newFileSystem(pathToVault, fsPropsBuilder.build());
              var mount = mountSetup.mount(fs)) {
-            System.out.println(mount.getMountpoint().uri());
+            LOG.info("Unlocked and mounted vault successfully to {}", mount.getMountpoint().uri());
             Runtime.getRuntime().addShutdownHook(new Thread(() -> teardown(mount)));
             Thread.currentThread().join();
         }
