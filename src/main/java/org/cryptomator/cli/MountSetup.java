@@ -111,10 +111,17 @@ public class MountSetup {
 
     Mount mount(FileSystem fs) throws MountFailedException {
         if (!mountService.hasCapability(MOUNT_TO_SYSTEM_CHOSEN_PATH) && mountPoint.isEmpty()) {
-            throw new CommandLine.ParameterException(spec.commandLine(), "The selected mounter %s requires a mount point. Use --mountPoint /path/to/mount/point to specify it.".formatted(mountService.displayName()));
+            throw new RuntimeException("Unsupported configuration: Mounter %s requires a mount point. Use --mountPoint /path/to/mount/point to specify it.".formatted(mountService.getClass().getName()));
         }
+
         var builder = prepareMountBuilder(fs);
-        mountPoint.ifPresent(builder::setMountpoint);
+
+        try {
+            mountPoint.ifPresent(builder::setMountpoint);
+        } catch (UnsupportedOperationException e) {
+            var errorMessage = String.format("Unsupported configuration: Mounter '%s' does not support flag --mountpoint", mountService.getClass().getName());
+            throw new RuntimeException(errorMessage);
+        }
         LOG.debug("Mounting vault using {} to {}.", mountService.displayName(), mountPoint.isPresent() ? mountPoint.get() : "system chosen location");
         return builder.mount();
     }
