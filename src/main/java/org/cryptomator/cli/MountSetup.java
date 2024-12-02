@@ -48,7 +48,7 @@ public class MountSetup {
 
     @CommandLine.Option(names = {"--loopbackHostName"}, description = "Name of the loopback address.")
     Optional<String> loopbackHostName;
-    
+
     @CommandLine.Option(names = {"--loopbackPort"}, description = "Port used at the loopback address.")
     Optional<Integer> loopbackPort;
 
@@ -92,7 +92,7 @@ public class MountSetup {
         }
 
         var ignoredMOPs = specifiedMOPs.entrySet().stream().filter(Map.Entry::getValue).map(e -> e.getKey().name()).collect(Collectors.joining(","));
-        if(!ignoredMOPs.isEmpty()) {
+        if (!ignoredMOPs.isEmpty()) {
             LOG.info("Ignoring unsupported options: {}", ignoredMOPs);
         }
         return builder;
