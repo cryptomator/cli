@@ -28,7 +28,8 @@ public class PasswordSource {
 
     Passphrase readPassphrase() throws IOException {
         if (passphraseStdin != null) {
-            return new Passphrase(passphraseStdin); //readPassphraseFromStdin();
+            System.out.println("\n"); //otherwise other output might not be clearly separated on the console
+            return new Passphrase(passphraseStdin);
         } else if (passphraseEnvironmentVariable != null) {
             return readPassphraseFromEnvironment();
         } else if (passphraseFile != null) {
