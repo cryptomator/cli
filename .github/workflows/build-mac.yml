@@ -161,15 +161,15 @@ jobs:
         working-directory: target
         # ditto must be used, see https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution#Build-a-zip-archive
       - name: Zip binary for notarization
-        if: inputs.notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
         run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
       - name: Setup Xcode
-        if: inputs.notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
         run: sudo xcode-select -s ${{ matrix.xcode-path}}
         shell: bash
         #would like to uses cocoalibs/xcode-notarization-action@v1, but blocked due to https://github.com/cocoalibs/xcode-notarization-action/issues/1
       - name: Prepare Notarization Credentials
-        if: inputs.notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
         run: |
           # create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
@@ -181,13 +181,13 @@ jobs:
           xcrun notarytool store-credentials "notary" --apple-id "${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}" --password "${{ secrets.MACOS_NOTARIZATION_PW }}" --team-id "${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}" --keychain "${KEYCHAIN_PATH}"
         shell: bash
       - name: Notarize
-        if: inputs.notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
         run: |
           KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
           xcrun notarytool submit ${{ matrix.artifact-name }} --keychain-profile "notary" --keychain "${KEYCHAIN_PATH}" --wait
         shell: bash
       - name: Staple
-        if: inputs.notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
         run: xcrun stapler staple ./target/cryptomator-cli.app
         shell: bash
       - name: Cleanup
