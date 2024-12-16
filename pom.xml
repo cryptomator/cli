@@ -20,7 +20,7 @@
 		<mainClass>org.cryptomator.cli.CryptomatorCli</mainClass>
 
 		<!-- runtime dependencies -->
-		<cryptofs.version>2.7.0</cryptofs.version>
+		<cryptofs.version>2.7.1</cryptofs.version>
 		<webdav-nio.version>2.0.7</webdav-nio.version>
 		<fuse-nio.version>5.0.2</fuse-nio.version>
 		<logback.version>1.5.12</logback.version>
