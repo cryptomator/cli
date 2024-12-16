@@ -28,7 +28,8 @@ public class PasswordSource {
 
     Passphrase readPassphrase() throws IOException {
         if (passphraseStdin != null) {
-            return new Passphrase(passphraseStdin); //readPassphraseFromStdin();
+            System.out.println("\n"); //otherwise other output might not be clearly separated on the console
+            return new Passphrase(passphraseStdin);
         } else if (passphraseEnvironmentVariable != null) {
             return readPassphraseFromEnvironment();
         } else if (passphraseFile != null) {
@@ -60,7 +61,7 @@ public class PasswordSource {
             charWrapper = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(fileContent));
             //strips newline, since most files on linux end with a new line
             var length = charWrapper.limit();
-            if(charWrapper.get(length) == '\n') {
+            if(charWrapper.get(length - 1) == '\n') {
                length--;
             }
             char[] content = new char[length];

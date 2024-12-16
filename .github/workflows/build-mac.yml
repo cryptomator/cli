@@ -7,7 +7,7 @@ on:
     inputs:
       sem-version:
         description: 'Version'
-        required: false
+        required: true
       notarize:
         description: 'Notarize app'
         required: false
@@ -15,11 +15,10 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 env:
   JAVA_DIST: 'zulu'
-  JAVA_VERSION: '22.0.2+9'
+  JAVA_VERSION: '23.0.1+11'
 
 defaults:
   run:
