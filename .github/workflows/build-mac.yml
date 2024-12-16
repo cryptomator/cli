@@ -1,0 +1,224 @@
+name: Java app image macOS
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      sem-version:
+        description: 'Version'
+        required: true
+      notarize:
+        description: 'Notarize app'
+        required: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  JAVA_DIST: 'zulu'
+  JAVA_VERSION: '23.0.1+11'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare:
+    name: Determines the versions strings for the binaries
+    runs-on: [ubuntu-latest]
+    outputs:
+      semVerStr: ${{ steps.determine-version.outputs.version }}
+      semVerNum: ${{steps.determine-number.outputs.number}}
+      revisionNum: ${{steps.determine-number.outputs.revision}}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: determine-version
+        shell: pwsh
+        run: |
+          if ( '${{github.event_name}}' -eq 'release') {
+            echo 'version=${{ github.event.release.tag_name}}' >> "$env:GITHUB_OUTPUT"
+            exit 0
+          } elseif ('${{inputs.sem-version}}') {
+            echo 'version=${{ inputs.sem-version}}' >> "$env:GITHUB_OUTPUT"
+            exit 0
+          }
+          Write-Error "Version neither via input nor by tag specified. Aborting"
+          exit 1
+      - id: determine-number
+        run: |
+          SEM_VER_NUM=$(echo "${{ steps.determine-version.outputs.version }}" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "number=${SEM_VER_NUM}" >> "$GITHUB_OUTPUT"
+          REVISION_NUM=`git rev-list --count HEAD`
+          echo "revision=${REVISION_NUM}" >> "$GITHUB_OUTPUT"
+
+  build-binary:
+    name: Build java app image
+    needs: [prepare]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            architecture: arm64
+            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-arm64.zip
+            xcode-path: /Applications/Xcode_16.app
+          - os: macos-13
+            architecture: x64
+            artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-mac-x64.zip
+            xcode-path: /Applications/Xcode_15.2.app
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - name: Set version
+        run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
+      - name: Run maven
+        run: mvn -B clean package -DskipTests
+      - name: Patch target dir
+        run: |
+          cp target/cryptomator-*.jar target/mods
+      - name: Run jlink
+        run: |
+          envsubst < dist/jlink.args > target/jlink.args
+          "${JAVA_HOME}/bin/jlink" '@./target/jlink.args'
+      - name: Run jpackage
+        run: |
+          envsubst < dist/jpackage.args > target/jpackage.args
+          "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args'
+        env:
+          JP_APP_VERSION: '1.0.0' # see https://github.com/cryptomator/cli/issues/72
+          APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
+          NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.mac
+      - name: Patch .app dir
+        run: |
+          cp ../LICENSE.txt cryptomator-cli.app/Contents
+          cp cryptomator-cli_completion.sh cryptomator-cli.app/Contents
+          sed -i '' "s|###BUNDLE_SHORT_VERSION_STRING###|${VERSION_NO}|g" cryptomator-cli.app/Contents/Info.plist
+          sed -i '' "s|###BUNDLE_VERSION###|${REVISION_NO}|g" cryptomator-cli.app/Contents/Info.plist
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "cryptomator-cli.app/Contents/embedded.provisionprofile"
+        working-directory: target
+        env:
+          VERSION_NO: ${{ needs.prepare.outputs.semVerNum }}
+          REVISION_NO: ${{ needs.prepare.outputs.revisionNum }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+      - name: Install codesign certificate
+        run: |
+          # create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/codesign.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/codesign.keychain-db
+
+          # import certificate and provisioning profile from secrets
+          echo -n "$CODESIGN_P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$CODESIGN_TMP_KEYCHAIN_PW" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 900 $KEYCHAIN_PATH
+          security unlock-keychain -p "$CODESIGN_TMP_KEYCHAIN_PW" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$CODESIGN_P12_PW" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+        env:
+          CODESIGN_P12_BASE64: ${{ secrets.MACOS_CODESIGN_P12_BASE64 }}
+          CODESIGN_P12_PW: ${{ secrets.MACOS_CODESIGN_P12_PW }}
+          CODESIGN_TMP_KEYCHAIN_PW: ${{ secrets.MACOS_CODESIGN_TMP_KEYCHAIN_PW }}
+      - name: Codesign
+        run: |
+          echo "Codesigning jdk files..."
+          find cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          find cryptomator-cli.app/Contents/runtime/Contents/Home/lib/ \( -name 'jspawnhelper' -o -name 'pauseengine' -o -name 'simengine' \) -exec codesign --force -o runtime -s ${CODESIGN_IDENTITY} {} \;
+          echo "Codesigning jar contents..."
+          find cryptomator-cli.app/Contents/runtime/Contents/MacOS -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+          for JAR_PATH in `find cryptomator-cli.app -name "*.jar"`; do
+            if [[ `unzip -l ${JAR_PATH} | grep '.dylib\|.jnilib'` ]]; then
+              JAR_FILENAME=$(basename ${JAR_PATH})
+              OUTPUT_PATH=${JAR_PATH%.*}
+              echo "Codesigning libs in ${JAR_FILENAME}..."
+              unzip -q ${JAR_PATH} -d ${OUTPUT_PATH}
+              find ${OUTPUT_PATH} -name '*.dylib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+              find ${OUTPUT_PATH} -name '*.jnilib' -exec codesign --force -s ${CODESIGN_IDENTITY} {} \;
+              rm ${JAR_PATH}
+              pushd ${OUTPUT_PATH} > /dev/null
+              zip -qr ../${JAR_FILENAME} *
+              popd > /dev/null
+              rm -r ${OUTPUT_PATH}
+            fi
+          done
+          echo "Codesigning Cryptomator-cli.app..."
+          sed -i '' "s|###APP_IDENTIFIER_PREFIX###|${TEAM_IDENTIFIER}.|g" ../dist/mac/cryptomator-cli.entitlements
+          sed -i '' "s|###TEAM_IDENTIFIER###|${TEAM_IDENTIFIER}|g" ../dist/mac/cryptomator-cli.entitlements
+          codesign --force --deep --entitlements ../dist/mac/cryptomator-cli.entitlements -o runtime -s ${CODESIGN_IDENTITY} cryptomator-cli.app
+        env:
+          CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+          TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
+        working-directory: target
+        # ditto must be used, see https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution#Build-a-zip-archive
+      - name: Zip binary for notarization
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
+        run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+      - name: Setup Xcode
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
+        run: sudo xcode-select -s ${{ matrix.xcode-path}}
+        shell: bash
+        #would like to uses cocoalibs/xcode-notarization-action@v1, but blocked due to https://github.com/cocoalibs/xcode-notarization-action/issues/1
+      - name: Prepare Notarization Credentials
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
+        run: |
+          # create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
+          KEYCHAIN_PASS=$(uuidgen)
+          security create-keychain -p "${KEYCHAIN_PASS}" ${KEYCHAIN_PATH}
+          security set-keychain-settings -lut 900 ${KEYCHAIN_PATH}
+          security unlock-keychain -p "${KEYCHAIN_PASS}" ${KEYCHAIN_PATH}
+          # import credentials from secrets
+          xcrun notarytool store-credentials "notary" --apple-id "${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}" --password "${{ secrets.MACOS_NOTARIZATION_PW }}" --team-id "${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}" --keychain "${KEYCHAIN_PATH}"
+        shell: bash
+      - name: Notarize
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
+          xcrun notarytool submit ${{ matrix.artifact-name }} --keychain-profile "notary" --keychain "${KEYCHAIN_PATH}" --wait
+        shell: bash
+      - name: Staple
+        if: (startsWith(github.ref, 'refs/tags/') && github.event.action == 'published') || inputs.notarize
+        run: xcrun stapler staple ./target/cryptomator-cli.app
+        shell: bash
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          rm -f ./${{ matrix.artifact-name}}
+          security delete-keychain $RUNNER_TEMP/notarization.keychain-db
+        shell: bash
+        continue-on-error: true
+      - name: Zip app for distribution
+        run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+      - name: Create detached GPG signature with key 615D449FE6E6A235
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ matrix.artifact-name }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptomator-cli-mac-${{ matrix.architecture }}
+          path: |
+            ${{ matrix.artifact-name}}
+            *.asc
+          if-no-files-found: error
+      - name: Publish artefact on GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
+          files: |
+            ${{ matrix.artifact-name }}
+            cryptomator-cli-*.asc

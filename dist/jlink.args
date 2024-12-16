@@ -1,0 +1,9 @@
+--verbose
+--module-path "${JAVA_HOME}/jmods"
+--output target/runtime
+--add-modules java.base,java.compiler,java.naming,java.xml
+--strip-native-commands
+--no-header-files
+--no-man-pages
+--strip-debug
+--compress zip-6

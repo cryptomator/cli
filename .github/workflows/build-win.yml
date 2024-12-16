@@ -1,0 +1,154 @@
+name: Java app image Windows
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      sem-version:
+        description: 'Version'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  JAVA_DIST: 'zulu'
+  JAVA_VERSION: '23.0.1+11'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  prepare:
+    name: Determines the versions strings for the binaries
+    runs-on: [ubuntu-latest]
+    outputs:
+      semVerStr: ${{ steps.determine-version.outputs.version }}
+      semVerNum: ${{steps.determine-number.outputs.number}}
+    steps:
+      - id: determine-version
+        shell: pwsh
+        run: |
+          if ( '${{github.event_name}}' -eq 'release') {
+            echo 'version=${{ github.event.release.tag_name}}' >> "$env:GITHUB_OUTPUT"
+            exit 0
+          } elseif ('${{inputs.sem-version}}') {
+            echo 'version=${{ inputs.sem-version}}' >> "$env:GITHUB_OUTPUT"
+            exit 0
+          }
+          Write-Error "Version neither via input nor by tag specified. Aborting"
+          exit 1
+      - id: determine-number
+        run: |
+          SEM_VER_NUM=$(echo "${{ steps.determine-version.outputs.version }}" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "number=${SEM_VER_NUM}" >> "$GITHUB_OUTPUT"
+
+  build-binary:
+    name: Build java app image
+    needs: [prepare]
+    runs-on: windows-latest
+    env:
+        artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-win-x64.zip
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DIST }}
+      - name: Set version
+        run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
+      - name: Run maven
+        run: mvn -B clean package -DskipTests
+      - name: Patch target dir
+        run: |
+          cp LICENSE.txt target
+          cp target/cryptomator-*.jar target/mods
+      - name: Run jlink
+        run: |
+          envsubst < dist/jlink.args > target/jlink.args
+          "${JAVA_HOME}/bin/jlink" '@./target/jlink.args'
+      - name: Run jpackage
+        run: |
+          envsubst < dist/jpackage.args > target/jpackage.args
+          "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args' --win-console
+        env:
+          JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
+          APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
+          NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.win
+      - name: Update app dir
+        run: |
+          cp LICENSE.txt target/cryptomator-cli
+          cp target/cryptomator-cli_completion.sh target/cryptomator-cli
+      - name: Fix permissions
+        run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
+        shell: pwsh
+      - name: Extract jars with DLLs for Codesigning
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName "System.io.compression.filesystem"
+          $jarFolder = Resolve-Path ".\target\Cryptomator-cli\app\mods"
+          $jarExtractDir = New-Item -Path ".\target\jar-extract" -ItemType Directory
+
+          #for all jars inspect
+          Get-ChildItem -Path $jarFolder -Filter "*.jar" | ForEach-Object {
+              $jar = [Io.compression.zipfile]::OpenRead($_.FullName)
+              if (@($jar.Entries | Where-Object {$_.Name.ToString().EndsWith(".dll")} | Select-Object -First 1).Count -gt 0) {
+                  #jars containing dlls extract
+                  Set-Location $jarExtractDir
+                  Expand-Archive -Path $_.FullName
+              }
+              $jar.Dispose()
+          }
+      - name: Codesign
+        uses: skymatic/code-sign-action@v3
+        with:
+          certificate: ${{ secrets.WIN_CODESIGN_P12_BASE64 }}
+          password: ${{ secrets.WIN_CODESIGN_P12_PW }}
+          certificatesha1: ${{ vars.WIN_CODESIGN_CERT_SHA1 }}
+          description: Cryptomator
+          timestampUrl: 'http://timestamp.digicert.com'
+          folder: target
+          recursive: true
+      - name: Replace DLLs inside jars with signed ones
+        shell: pwsh
+        run: |
+          $jarExtractDir = Resolve-Path ".\target\jar-extract"
+          $jarFolder = Resolve-Path ".\target\cryptomator-cli\app\mods"
+          Get-ChildItem -Path $jarExtractDir | ForEach-Object {
+              $jarName = $_.Name
+              $jarFile = "${jarFolder}\${jarName}.jar"
+              Set-Location $_
+              Get-ChildItem -Path $_ -Recurse -File "*.dll" | ForEach-Object {
+                  # update jar with signed dll
+                  jar --file="$jarFile" --update $(Resolve-Path -Relative -Path $_)
+              }
+          }
+      - name: Zip binary for release
+        shell: pwsh
+        run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
+      - name: Create detached GPG signature with key 615D449FE6E6A235
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ env.artifact-name}}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptomator-cli-win-x64
+          path: |
+            ${{ env.artifact-name}}
+            *.asc
+          if-no-files-found: error
+      - name: Publish artefact on GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
+          files: |
+            ${{ env.artifact-name}}
+            cryptomator-cli-*.asc
+

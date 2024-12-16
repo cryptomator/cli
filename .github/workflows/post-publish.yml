@@ -1,0 +1,36 @@
+name: Post Release Publish Tasks
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    env:
+      ARCHIVE_NAME: cryptomator-cli-${{ github.event.release.tag_name }}.tar.gz
+    steps:
+      - name: Download source tarball
+        run: |
+          curl -L -H "Accept: application/vnd.github+json" https://github.com/cryptomator/cli/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz --output ${{ env.ARCHIVE_NAME }}
+      - name: Sign source tarball with key 615D449FE6E6A235
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ${{ env.ARCHIVE_NAME }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - name: Publish asc on GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          fail_on_unmatched_files: true
+          token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
+          files: |
+            ${{ env.ARCHIVE_NAME }}.asc
