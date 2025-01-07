@@ -110,7 +110,11 @@ public class MountSetup {
     }
 
     Mount mount(FileSystem fs) throws MountFailedException {
-        if (!mountService.hasCapability(MOUNT_TO_SYSTEM_CHOSEN_PATH) && mountPoint.isEmpty()) {
+        boolean requiresMountPoint = Set.of(MOUNT_TO_EXISTING_DIR, //
+                        MOUNT_WITHIN_EXISTING_PARENT, //
+                        MOUNT_AS_DRIVE_LETTER)
+                .stream().anyMatch(mountService::hasCapability);
+        if( requiresMountPoint && mountPoint.isEmpty()){
             throw new RuntimeException("Unsupported configuration: Mounter %s requires a mount point. Use --mountPoint /path/to/mount/point to specify it.".formatted(mountService.getClass().getName()));
         }
 

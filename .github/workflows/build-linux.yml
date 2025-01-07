@@ -96,7 +96,10 @@ jobs:
           path: ./target/cryptomator-cli
           if-no-files-found: error
       - name: Zip binary for release
-        run: zip -r ./${{ matrix.artifact-name}} ./target/cryptomator-cli
+        run: |
+          zip -r ./${{ matrix.artifact-name}} ./cryptomator-cli
+          mv ./${{ matrix.artifact-name }} ..
+        working-directory: target
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
