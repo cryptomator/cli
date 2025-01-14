@@ -11,7 +11,7 @@
 --dest target
 --name cryptomator-cli
 --vendor "Skymatic GmbH"
---copyright "(C) 2016 - 2024 Skymatic GmbH"
+--copyright "(C) 2016 - 2025 Skymatic GmbH"
 --app-version "${JP_APP_VERSION}"
 --java-options "-Dorg.cryptomator.cli.version=${APP_VERSION}"
 --java-options "--enable-native-access=${NATIVE_ACCESS_PACKAGE}"
