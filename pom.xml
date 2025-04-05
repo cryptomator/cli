@@ -78,6 +78,12 @@
 			<artifactId>fuse-nio-adapter</artifactId>
 			<version>${fuse-nio.version}</version>
 		</dependency>
+		<!-- TODO: remove once fuse-nio-adapter is updated -->
+		<dependency>
+			<groupId>org.cryptomator</groupId>
+			<artifactId>jfuse</artifactId>
+			<version>0.7.2</version>
+		</dependency>
 
 		<dependency>
 			<groupId>info.picocli</groupId>
