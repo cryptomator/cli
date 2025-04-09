@@ -22,7 +22,7 @@
 		<!-- runtime dependencies -->
 		<cryptofs.version>2.7.1</cryptofs.version>
 		<webdav-nio.version>2.0.7</webdav-nio.version>
-		<fuse-nio.version>5.0.2</fuse-nio.version>
+		<fuse-nio.version>5.0.5</fuse-nio.version>
 		<logback.version>1.5.13</logback.version>
 		<slf4j.version>2.0.16</slf4j.version>
 
@@ -77,12 +77,6 @@
 			<groupId>org.cryptomator</groupId>
 			<artifactId>fuse-nio-adapter</artifactId>
 			<version>${fuse-nio.version}</version>
-		</dependency>
-		<!-- TODO: remove once fuse-nio-adapter is updated -->
-		<dependency>
-			<groupId>org.cryptomator</groupId>
-			<artifactId>jfuse</artifactId>
-			<version>0.7.2</version>
 		</dependency>
 
 		<dependency>
