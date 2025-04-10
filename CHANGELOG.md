@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The changelog starts with version 0.6.2.
 Changes to prior versions can be found on the [Github release page](https://github.com/cryptomator/cli/releases).
 
-## [Unreleased]
+## [0.6.2] - 2025-04-10
 
 ### Changed
 
