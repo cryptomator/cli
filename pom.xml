@@ -11,7 +11,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<jdk.version>23</jdk.version>
+		<jdk.version>24</jdk.version>
 
 		<!--jpackage stuff -->
 		<!-- Group IDs of jars that need to stay on the class path for now

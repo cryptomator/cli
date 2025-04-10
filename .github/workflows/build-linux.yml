@@ -14,7 +14,7 @@ permissions:
 
 env:
   JAVA_DIST: 'zulu'
-  JAVA_VERSION: '23.0.1+11'
+  JAVA_VERSION: '24.0.1+36'
 
 defaults:
   run:
