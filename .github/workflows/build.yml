@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: '23'
+          java-version: '24'
           distribution: 'temurin'
       - name: Ensure to use tagged version
         run: mvn versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/} # use shell parameter expansion to strip of 'refs/tags'
