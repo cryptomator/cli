@@ -27,7 +27,6 @@
 		<slf4j.version>2.0.17</slf4j.version>
 
 		<!-- build dependencies -->
-		<jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
 		<picocli.version>4.7.6</picocli.version>
 
 		<!-- maven plugins -->
