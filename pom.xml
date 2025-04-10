@@ -32,6 +32,7 @@
 		<!-- maven plugins -->
 		<maven-compiler.version>3.14.0</maven-compiler.version>
 		<maven-jar.version>3.4.2</maven-jar.version>
+		<maven-dependency.version>3.8.1</maven-dependency.version>
 		<maven-shade.version>3.6.0</maven-shade.version>
 		<maven-exec.version>3.5.0</maven-exec.version>
 	</properties>
@@ -144,6 +145,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
+				<version>${maven-dependency.version}</version>
 				<executions>
 					<!-- sort jars into two buckets (classpath and modulepath). exclude openjfx, which gets jlinked separately -->
 					<execution>
