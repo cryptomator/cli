@@ -14,7 +14,7 @@ permissions:
 
 env:
   JAVA_DIST: 'zulu'
-  JAVA_VERSION: '24.0.1+36'
+  JAVA_VERSION: '24.0.0+36'
 
 defaults:
   run:
@@ -56,7 +56,7 @@ jobs:
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-linux-x64.zip
-          - os: [self-hosted, Linux, ARM64]
+          - os: ubuntu-24.04-arm
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
             artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-linux-aarch64.zip
