@@ -25,7 +25,7 @@ Afterward, you can directly run Cryptomator-CLI by calling the binary from a ter
 > [!NOTE]
 > On macOS, the path to the binary is `cryptomator-cli.app/Contents/MacOS/cryptomator-cli`
 
-To unmount, send a SIGTERM signal to the process, e.g. by pressing CTRL+C in the terminal.
+To unmount, send a SIGINT signal to the process, e.g. by pressing CTRL+C in the terminal.
 
 For a complete list of options, use the `--help` option.
 ```shell
