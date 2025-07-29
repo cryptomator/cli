@@ -102,15 +102,15 @@ jobs:
               $jar.Dispose()
           }
       - name: Codesign
-        uses: skymatic/code-sign-action@v3
+        uses: skymatic/workflows/.github/actions/win-sign-action@450e322ff2214d0be0b079b63343c894f3ef735f
         with:
-          certificate: ${{ secrets.WIN_CODESIGN_P12_BASE64 }}
-          password: ${{ secrets.WIN_CODESIGN_P12_PW }}
-          certificatesha1: ${{ vars.WIN_CODESIGN_CERT_SHA1 }}
-          description: Cryptomator
-          timestampUrl: 'http://timestamp.digicert.com'
-          folder: target
+          base-dir: 'target'
+          file-extensions: 'dll,exe'
           recursive: true
+          sign-description: 'Cryptomator CLI'
+          sign-url: 'https://cryptomator.org'
+          username: ${{ secrets.WIN_CODESIGN_USERNAME }}
+          password: ${{ secrets.WIN_CODESIGN_PW }}
       - name: Replace DLLs inside jars with signed ones
         shell: pwsh
         run: |
