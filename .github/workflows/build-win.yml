@@ -52,8 +52,8 @@ jobs:
     env:
         artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-win-x64.zip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
@@ -102,7 +102,7 @@ jobs:
               $jar.Dispose()
           }
       - name: Codesign
-        uses: skymatic/workflows/.github/actions/win-sign-action@450e322ff2214d0be0b079b63343c894f3ef735f
+        uses: skymatic/workflows/.github/actions/win-sign-action@450e322ff2214d0be0b079b63343c894f3ef735f #TODO: replace by azure signing
         with:
           base-dir: 'target'
           file-extensions: 'dll,exe'
@@ -135,7 +135,7 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: cryptomator-cli-win-x64
           path: |
@@ -144,7 +144,7 @@ jobs:
           if-no-files-found: error
       - name: Publish artefact on GitHub Releases
         if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
