@@ -38,6 +38,23 @@ public class PasswordSource {
         throw new IllegalStateException("Passphrase source not specified, but required.");
     }
 
+    void confirmPassphrase() throws IOException {
+        // Don't confirm the passphrase if stdin is piped.
+        if (passphraseStdin == null || System.console() == null) {
+            return;
+        }
+        char[] confirmationInput = System.console().readPassword("Confirm passphrase: ");
+        if (confirmationInput == null) {
+            throw new PassphraseNotConfirmedException("Passphrase confirmation failed (EOF reached).");
+        }
+        try (Passphrase confirmationPassphrase = new Passphrase(confirmationInput)) {
+            System.out.println("\n");
+            if (!Arrays.equals(passphraseStdin, confirmationPassphrase.content)) {
+                throw new PassphraseNotConfirmedException("Passphrase does not match. Please try again.");
+            }
+        }
+    }
+
     private Passphrase readPassphraseFromEnvironment() {
         LOG.debug("Reading passphrase from env variable '{}'", passphraseEnvironmentVariable);
         var tmp = System.getenv(passphraseEnvironmentVariable);
@@ -104,6 +121,12 @@ public class PasswordSource {
         ReadingEnvironmentVariableFailedException(String msg) {
             super(msg);
         }
+    }
+
+    static class PassphraseNotConfirmedException extends PasswordSourceException {
+      PassphraseNotConfirmedException(String msg) {
+        super(msg);
+      }
     }
 
     record Passphrase(char[] content) implements AutoCloseable {

@@ -59,22 +59,20 @@ public class Create implements Callable<Integer> {
     public Integer call() throws Exception {
         csprng = SecureRandom.getInstanceStrong();
 
-        createVault(pathToVault);
+        try (var passphraseContainer = passwordSource.readPassphrase()) {
+            passwordSource.confirmPassphrase();
+
+            // Throw exception if there's something already there.
+            Files.createDirectory(pathToVault);
+
+            try (var masterkey = Masterkey.generate(csprng)) {
+                persistMasterkey(pathToVault, masterkey, passphraseContainer.content());
+                initializeVault(pathToVault, masterkey);
+            }
+        }
 
         LOG.info("Vault created successfully in {}", pathToVault);
         return 0;
-    }
-
-    private void createVault(Path path) throws IOException {
-        // Throw exception if there's something already there.
-        Files.createDirectory(path);
-
-        try (var passphraseContainer = passwordSource.readPassphrase();
-                var masterkey = Masterkey.generate(csprng)) {
-
-            persistMasterkey(path, masterkey, passphraseContainer.content());
-            initializeVault(path, masterkey);
-        }
     }
 
     private void persistMasterkey(Path path, Masterkey masterkey, char[] passphrase)
