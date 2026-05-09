@@ -72,21 +72,28 @@ public class Create implements Callable<Integer> {
         try (var passphraseContainer = passwordSource.readPassphrase();
                 var masterkey = Masterkey.generate(csprng)) {
 
-            Path masterkeyFilePath = path.resolve(MASTERKEY_FILE_NAME);
-            MasterkeyFileAccess masterkeyFileAccess = new MasterkeyFileAccess(PEPPER, csprng);
-            masterkeyFileAccess.persist(
-                    masterkey, masterkeyFilePath, CharBuffer.wrap(passphraseContainer.content()));
+            persistMasterkey(path, masterkey, passphraseContainer.content());
+            initializeVault(path, masterkey);
+        }
+    }
 
-            try {
-                CryptoFileSystemProperties fsProps =
-                        CryptoFileSystemProperties.cryptoFileSystemProperties()
-                                .withCipherCombo(CryptorProvider.Scheme.SIV_GCM)
-                                .withKeyLoader(ignored -> masterkey.copy())
-                                .build();
-                CryptoFileSystemProvider.initialize(path, fsProps, DEFAULT_KEY_ID);
-            } catch (CryptoException e) {
-                throw new IOException("Vault initialization failed", e);
-            }
+    private void persistMasterkey(Path path, Masterkey masterkey, char[] passphrase)
+            throws IOException {
+        Path masterkeyFilePath = path.resolve(MASTERKEY_FILE_NAME);
+        MasterkeyFileAccess masterkeyFileAccess = new MasterkeyFileAccess(PEPPER, csprng);
+        masterkeyFileAccess.persist(masterkey, masterkeyFilePath, CharBuffer.wrap(passphrase));
+    }
+
+    private void initializeVault(Path path, Masterkey masterkey) throws IOException {
+        CryptoFileSystemProperties fsProps =
+                CryptoFileSystemProperties.cryptoFileSystemProperties()
+                        .withCipherCombo(CryptorProvider.Scheme.SIV_GCM)
+                        .withKeyLoader(ignored -> masterkey.copy())
+                        .build();
+        try {
+            CryptoFileSystemProvider.initialize(path, fsProps, DEFAULT_KEY_ID);
+        } catch (CryptoException e) {
+            throw new IOException("Vault initialization failed", e);
         }
     }
 }
