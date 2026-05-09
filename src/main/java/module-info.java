@@ -10,6 +10,7 @@ open module org.cryptomator.cli {
     requires org.fusesource.jansi;
     requires ch.qos.logback.core;
     requires ch.qos.logback.classic;
+    requires org.cryptomator.cryptolib;
 
     provides Configurator with LogbackConfigurator;
 }
