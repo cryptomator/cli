@@ -11,8 +11,8 @@ import picocli.CommandLine.RunLast;
 @Command(name = "cryptomator-cli",
         mixinStandardHelpOptions = true,
         version = "${org.cryptomator.cli.version}",
-        description = "Unlocks a cryptomator vault and mounts it into the system.",
-        subcommands = { Unlock.class, ListMounters.class, CommandLine.HelpCommand.class})
+        description = "Manage Cryptomator vaults from the command line.",
+        subcommands = {Create.class, Unlock.class, ListMounters.class, CommandLine.HelpCommand.class})
 public class CryptomatorCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(CryptomatorCli.class);
