@@ -3,13 +3,39 @@ name: Java app image Windows
 on:
   schedule:
     - cron: '0 10 10 * *'
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      semVerNum:
+        type: string
+        description: 'The Major.Minor.Patch part of the version'
+        required: true
+      revisionNum:
+        type: string
+        description: 'The revision number'
+        required: true
+      semVerSuffix:
+        type: string
+        description: 'The suffix of the version, including dash'
+        required: true
+      upload-to-draft:
+        type: boolean
+        default: true
+    outputs:
+      sha256-win-zip-x64:
+        description: "SHA256 sum of the x64 zip"
+        value: ${{ jobs.build-binary.outputs.sha256sum}}
   workflow_dispatch:
     inputs:
-      sem-version:
-        description: 'Version'
-        required: true
+      semVerNum:
+        description: 'The Major.Minor.Patch part of the version'
+        required: false
+      revisionNum:
+        description: 'The revision number'
+        required: false
+      semVerSuffix:
+        description: 'The suffix of the version, including dash'
+        required: false
+        default: '-SNAPSHOT'
 
 permissions:
   contents: write
@@ -17,42 +43,21 @@ permissions:
 env:
   JAVA_DIST: 'zulu'
   JAVA_VERSION: '24.0.0+36'
+  VERSION_NUM: ${{ inputs.semVerNum || '99.99.99' }}
+  VERSION_SUFFIX: ${{ inputs.semVerSuffix || '' }}
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  prepare:
-    name: Determines the versions strings for the binaries
-    runs-on: [ubuntu-latest]
-    outputs:
-      semVerStr: ${{ steps.determine-version.outputs.version }}
-      semVerNum: ${{steps.determine-number.outputs.number}}
-    steps:
-      - id: determine-version
-        shell: pwsh
-        run: |
-          if ( '${{github.event_name}}' -eq 'release') {
-            echo 'version=${{ github.event.release.tag_name}}' >> "$env:GITHUB_OUTPUT"
-            exit 0
-          } elseif ('${{inputs.sem-version}}') {
-            echo 'version=${{ inputs.sem-version}}' >> "$env:GITHUB_OUTPUT"
-            exit 0
-          }
-          Write-Error "Version neither via input nor by tag specified. Aborting"
-          exit 1
-      - id: determine-number
-        run: |
-          SEM_VER_NUM=$(echo "${{ steps.determine-version.outputs.version }}" | sed -E 's/([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          echo "number=${SEM_VER_NUM}" >> "$GITHUB_OUTPUT"
-
   build-binary:
     name: Build java app image
-    needs: [prepare]
     runs-on: windows-latest
+    outputs:
+      sha256sum: ${{ steps.sha256sum.outputs.value }}
     env:
-        artifact-name: cryptomator-cli-${{ needs.prepare.outputs.semVerStr }}-win-x64.zip
+        artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-win-x64.zip
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
@@ -60,7 +65,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
       - name: Set version
-        run: ./mvnw versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
+        run: ./mvnw versions:set -DnewVersion="${VERSION_NUM}${VERSION_SUFFIX}"
       - name: Run maven
         run: ./mvnw -B clean package -DskipTests
       - name: Patch target dir
@@ -76,8 +81,8 @@ jobs:
           envsubst < dist/jpackage.args > target/jpackage.args
           "${JAVA_HOME}/bin/jpackage" '@./target/jpackage.args' --win-console
         env:
-          JP_APP_VERSION: ${{ needs.prepare.outputs.semVerNum }}
-          APP_VERSION: ${{ needs.prepare.outputs.semVerStr }}
+          JP_APP_VERSION: ${{ env.VERSION_NUM }}
+          APP_VERSION: ${{ env.VERSION_NUM }}${{ env.VERSION_SUFFIX }}
           NATIVE_ACCESS_PACKAGE: org.cryptomator.jfuse.win
       - name: Update app dir
         run: |
@@ -130,6 +135,11 @@ jobs:
       - name: Zip binary for release
         shell: pwsh
         run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
+      - name: Compute SHA256 sum
+        id: sha256sum
+        run: |
+          read -ra CMD_OUTPUT < <(sha256sum ./${{ env.artifact-name }})
+          echo "value=${CMD_OUTPUT[0]}" >> "$GITHUB_OUTPUT"
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
@@ -144,13 +154,13 @@ jobs:
             ${{ env.artifact-name}}
             *.asc
           if-no-files-found: error
-      - name: Publish artefact on GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/') && github.event.action == 'published'
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+      - name: Publish zip on GitHub Releases
+        if: inputs.upload-to-draft
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
+          draft: true
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
             ${{ env.artifact-name}}
-            cryptomator-cli-*.asc
-
+            cryptomator-*.asc
