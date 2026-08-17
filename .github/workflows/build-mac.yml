@@ -78,9 +78,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DIST }}
       - name: Set version
-        run: mvn versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
+        run: ./mvnw versions:set -DnewVersion=${{ needs.prepare.outputs.semVerStr }}
       - name: Run maven
-        run: mvn -B clean package -DskipTests
+        run: ./mvnw -B clean package -DskipTests
       - name: Patch target dir
         run: |
           cp target/cryptomator-*.jar target/mods

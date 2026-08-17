@@ -18,15 +18,15 @@ jobs:
           java-version: '24'
           distribution: 'temurin'
       - name: Ensure to use tagged version
-        run: mvn versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/} # use shell parameter expansion to strip of 'refs/tags'
+        run: ./mvnw versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/} # use shell parameter expansion to strip of 'refs/tags'
         if: startsWith(github.ref, 'refs/tags/')
       - name: Output project version
         id: setversion
         run: |
-          BUILD_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q -DforceStdout)
+          BUILD_VERSION=$(./mvnw help:evaluate "-Dexpression=project.version" -q -DforceStdout)
           echo "version=${BUILD_VERSION}" >> "$GITHUB_OUTPUT"
       - name: Build and Test
-        run: mvn -B install
+        run: ./mvnw -B install
       - name: Upload artifact cryptomator-cli-${{ steps.setversion.outputs.version }}.jar
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
