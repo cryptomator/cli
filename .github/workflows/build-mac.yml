@@ -1,6 +1,8 @@
 name: Java app image macOS
 
 on:
+  schedule:
+    - cron: '0 10 10 * *'
   release:
     types: [published]
   workflow_dispatch:

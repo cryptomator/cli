@@ -1,6 +1,8 @@
 name: Build
 
 on:
+  schedule:
+    - cron: '0 10 10 * *'
   push:
   pull_request_target:
     types: [labeled]
