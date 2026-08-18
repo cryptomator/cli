@@ -73,7 +73,7 @@ jobs:
             architecture: arm64
             artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-mac-arm64.zip
             xcode-path: /Applications/Xcode_16.app
-          - os: macos-15-large
+          - os: macos-15-intel
             architecture: x64
             artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-mac-x64.zip
             xcode-path: /Applications/Xcode_16.app
