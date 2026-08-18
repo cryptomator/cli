@@ -98,11 +98,6 @@ jobs:
         run: |
           cp LICENSE.txt target/cryptomator-cli
           cp target/cryptomator-cli_completion.sh target/cryptomator-cli
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: cryptomator-cli-linux-${{ matrix.architecture }}
-          path: ./target/cryptomator-cli
-          if-no-files-found: error
       - name: Zip binary for release
         run: |
           zip -r ./${{ matrix.artifact-name}} ./cryptomator-cli
@@ -115,6 +110,13 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cryptomator-cli-linux-${{ matrix.architecture }}
+          path: |
+            ${{ matrix.artifact-name }}
+            cryptomator-*.asc
+          if-no-files-found: error
       - name: Publish zip on GitHub Releases
         if: inputs.upload-to-draft
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
