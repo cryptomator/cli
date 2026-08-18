@@ -44,8 +44,8 @@ permissions:
   contents: write
 
 env:
-  JAVA_DIST: 'zulu'
-  JAVA_VERSION: '24.0.0+36'
+  JAVA_DIST: 'temurin'
+  JAVA_VERSION: '25.0.4+7'
   VERSION_NUM: ${{ inputs.semVerNum || '99.99.99' }}
   VERSION_SUFFIX: ${{ inputs.semVerSuffix || '' }}
 
