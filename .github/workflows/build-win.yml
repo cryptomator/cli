@@ -57,7 +57,7 @@ jobs:
     outputs:
       sha256sum: ${{ steps.sha256sum.outputs.value }}
     env:
-        artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-win-x64.zip
+        ARTIFACT_NAME: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-win-x64.zip
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
@@ -134,16 +134,16 @@ jobs:
           }
       - name: Zip binary for release
         shell: pwsh
-        run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath .\${{ env.artifact-name}}
+        run: Compress-Archive -Path .\target\cryptomator-cli -DestinationPath ".\${env:ARTIFACT_NAME}"
       - name: Compute SHA256 sum
         id: sha256sum
         run: |
-          read -ra CMD_OUTPUT < <(sha256sum ./${{ env.artifact-name }})
+          read -ra CMD_OUTPUT < <(sha256sum "./${ARTIFACT_NAME}")
           echo "value=${CMD_OUTPUT[0]}" >> "$GITHUB_OUTPUT"
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ env.artifact-name}}
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a "./${ARTIFACT_NAME}"
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
@@ -151,7 +151,7 @@ jobs:
         with:
           name: cryptomator-cli-win-x64
           path: |
-            ${{ env.artifact-name}}
+            ${{ env.ARTIFACT_NAME}}
             *.asc
           if-no-files-found: error
       - name: Publish zip on GitHub Releases
@@ -162,5 +162,5 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            ${{ env.artifact-name}}
+            ${{ env.ARTIFACT_NAME}}
             cryptomator-*.asc

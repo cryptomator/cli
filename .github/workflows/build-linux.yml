@@ -63,12 +63,12 @@ jobs:
           - os: ubuntu-latest
             architecture: x64
             native-access-lib: 'org.cryptomator.jfuse.linux.amd64'
-            artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-linux-x64.zip
           - os: ubuntu-24.04-arm
             architecture: aarch64
             native-access-lib: 'org.cryptomator.jfuse.linux.aarch64'
-            artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-linux-aarch64.zip
     runs-on: ${{ matrix.os }}
+    env:
+      ARTIFACT_NAME: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-linux-${{ matrix.architecture }}.zip
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
@@ -100,13 +100,13 @@ jobs:
           cp target/cryptomator-cli_completion.sh target/cryptomator-cli
       - name: Zip binary for release
         run: |
-          zip -r ./${{ matrix.artifact-name}} ./cryptomator-cli
-          mv ./${{ matrix.artifact-name }} ..
+          zip -r "./${ARTIFACT_NAME}" ./cryptomator-cli
+          mv "./${ARTIFACT_NAME}" ..
         working-directory: target
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ matrix.artifact-name }}
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${ARTIFACT_NAME}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
@@ -114,7 +114,7 @@ jobs:
         with:
           name: cryptomator-cli-linux-${{ matrix.architecture }}
           path: |
-            ${{ matrix.artifact-name }}
+            ${{ env.ARTIFACT_NAME }}
             cryptomator-*.asc
           if-no-files-found: error
       - name: Publish zip on GitHub Releases
@@ -125,7 +125,7 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            ${{ matrix.artifact-name }}
+            ${{ env.ARTIFACT_NAME }}
             cryptomator-*.asc
 
   collect-sha256sums:
