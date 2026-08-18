@@ -17,6 +17,10 @@ on:
         type: string
         description: 'The suffix of the version, including dash'
         required: true
+      sign:
+        type: boolean
+        description: 'Sign binaries'
+        default: true
       upload-to-draft:
         type: boolean
         default: true
@@ -36,6 +40,10 @@ on:
         description: 'The suffix of the version, including dash'
         required: false
         default: '-SNAPSHOT'
+      sign:
+        description: 'Sign binaries'
+        required: false
+        type: boolean
 
 permissions:
   contents: write
@@ -92,6 +100,7 @@ jobs:
         run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
         shell: pwsh
       - name: Extract jars with DLLs for Codesigning
+        if: inputs.sign || github.event_name == 'schedule'
         shell: pwsh
         run: |
           Add-Type -AssemblyName "System.io.compression.filesystem"
@@ -108,17 +117,36 @@ jobs:
               }
               $jar.Dispose()
           }
-      - name: Codesign
-        uses: skymatic/workflows/.github/actions/win-sign-action@450e322ff2214d0be0b079b63343c894f3ef735f #TODO: replace by azure signing
+      - name: Codesign with Azure Trusted Signing
+        if: inputs.sign || github.event_name == 'schedule'
+        uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
         with:
-          base-dir: 'target'
-          file-extensions: 'dll,exe'
-          recursive: true
-          sign-description: 'Cryptomator CLI'
-          sign-url: 'https://cryptomator.org'
-          username: ${{ secrets.WIN_CODESIGN_USERNAME }}
-          password: ${{ secrets.WIN_CODESIGN_PW }}
+          files-folder: ${{ github.workspace }}\target
+          files-folder-filter: 'exe,dll'
+          files-folder-recurse: true
+          append-signature: true
+          description: 'Cryptomator CLI'
+          description-url: 'https://cryptomator.org'
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          signing-account-name: cryptomatorSigning
+          certificate-profile-name: production
+          endpoint: https://weu.codesigning.azure.net/
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          exclude-environment-credential: false
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: true
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
       - name: Replace DLLs inside jars with signed ones
+        if: inputs.sign || github.event_name == 'schedule'
         shell: pwsh
         run: |
           $jarExtractDir = Resolve-Path ".\target\jar-extract"
