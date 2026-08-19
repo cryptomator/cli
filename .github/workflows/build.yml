@@ -1,6 +1,8 @@
 name: Build
 
 on:
+  schedule:
+    - cron: '0 10 10 * *'
   push:
   pull_request_target:
     types: [labeled]
@@ -32,10 +34,3 @@ jobs:
         with:
           name: cryptomator-cli-${{ steps.setversion.outputs.version }}.jar
           path: target/cryptomator-cli-*.jar
-      - name: Create release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
-          generate_release_notes: true
-          draft: true

@@ -1,0 +1,32 @@
+<!-- HEADER -->
+> [!WARNING]
+> 🚧 DO NOT EDIT 🚧
+>
+> The [builds are still running](https://github.com/cryptomator/cli/actions/workflows/draft-release.yml).
+> This banner will be replaced after the builds are finished.
+<!-- /HEADER -->
+
+<!--REPLACE with auto-generated release notes (see below)
+### What's New 🎉
+### Bugfixes 🐛
+### Other Changes 📎
+END REPLACE-->
+
+For a comprehensive view of changes, read the [CHANGELOG](https://github.com/cryptomator/cli/blob/$VERSION/CHANGELOG.md).
+
+---
+
+💾 SHA-256 checksums of release artifacts:
+```
+$TARBALL
+$WIN_x64
+$MAC_arm64
+$MAC_x64
+$LINUX_x64
+$LINUX_aarch64
+```
+
+> [!TIP]
+> You can verify the GPG signature of all assets using our public key: [`5811 7AFA 1F85 B3EE C154  677D 615D 449F E6E6 A235`](https://gist.github.com/cryptobot/211111cf092037490275f39d408f461a).
+
+<!-- Auto-Generated Release Notes: -->
