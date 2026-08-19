@@ -71,13 +71,13 @@ jobs:
         include:
           - os: macos-latest
             architecture: arm64
-            artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-mac-arm64.zip
             xcode-path: /Applications/Xcode_16.app
           - os: macos-15-intel
             architecture: x64
-            artifact-name: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-mac-x64.zip
             xcode-path: /Applications/Xcode_16.app
     runs-on: ${{ matrix.os }}
+    env:
+      ARTIFACT_NAME: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-mac-${{ matrix.architecture }}.zip
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
@@ -167,7 +167,7 @@ jobs:
         # ditto must be used, see https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution#Build-a-zip-archive
       - name: Zip binary for notarization
         if: inputs.notarize || github.event_name == 'schedule'
-        run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+        run: ditto -c -k --keepParent ./target/cryptomator-cli.app "./${ARTIFACT_NAME}"
       - name: Setup Xcode
         if: inputs.notarize || github.event_name == 'schedule'
         run: sudo xcode-select -s ${{ matrix.xcode-path}}
@@ -183,13 +183,17 @@ jobs:
           security set-keychain-settings -lut 900 ${KEYCHAIN_PATH}
           security unlock-keychain -p "${KEYCHAIN_PASS}" ${KEYCHAIN_PATH}
           # import credentials from secrets
-          xcrun notarytool store-credentials "notary" --apple-id "${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}" --password "${{ secrets.MACOS_NOTARIZATION_PW }}" --team-id "${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}" --keychain "${KEYCHAIN_PATH}"
+          xcrun notarytool store-credentials "notary" --apple-id "${APPLE_ID}" --password "${NOTARIZATION_PW}" --team-id "${TEAM_ID}" --keychain "${KEYCHAIN_PATH}"
+        env:
+          APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+          TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+          NOTARIZATION_PW: ${{ secrets.MACOS_NOTARIZATION_PW }}
         shell: bash
       - name: Notarize
         if: inputs.notarize || github.event_name == 'schedule'
         run: |
           KEYCHAIN_PATH=$RUNNER_TEMP/notarization.keychain-db
-          xcrun notarytool submit ${{ matrix.artifact-name }} --keychain-profile "notary" --keychain "${KEYCHAIN_PATH}" --wait
+          xcrun notarytool submit "${ARTIFACT_NAME}" --keychain-profile "notary" --keychain "${KEYCHAIN_PATH}" --wait
         shell: bash
       - name: Staple
         if: inputs.notarize || github.event_name == 'schedule'
@@ -198,16 +202,16 @@ jobs:
       - name: Cleanup
         if: ${{ always() }}
         run: |
-          rm -f ./${{ matrix.artifact-name}}
+          rm -f "./${ARTIFACT_NAME}"
           security delete-keychain $RUNNER_TEMP/notarization.keychain-db
         shell: bash
         continue-on-error: true
       - name: Zip app for distribution
-        run: ditto -c -k --keepParent ./target/cryptomator-cli.app ./${{ matrix.artifact-name}}
+        run: ditto -c -k --keepParent ./target/cryptomator-cli.app "./${ARTIFACT_NAME}"
       - name: Create detached GPG signature with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ./${{ matrix.artifact-name }}
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a "./${ARTIFACT_NAME}"
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
@@ -215,7 +219,7 @@ jobs:
         with:
           name: cryptomator-cli-mac-${{ matrix.architecture }}
           path: |
-            ${{ matrix.artifact-name}}
+            ${{ env.ARTIFACT_NAME}}
             *.asc
           if-no-files-found: error
       - name: Publish zip on GitHub Releases
@@ -226,7 +230,7 @@ jobs:
           fail_on_unmatched_files: true
           token: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
           files: |
-            ${{ matrix.artifact-name }}
+            ${{ env.ARTIFACT_NAME }}
             cryptomator-*.asc
 
   collect-sha256sums:
