@@ -71,7 +71,7 @@ jobs:
         include:
           - os: macos-latest
             architecture: arm64
-            xcode-path: /Applications/Xcode_16.app
+            xcode-path: /Applications/Xcode_26.6.app
           - os: macos-15-intel
             architecture: x64
             xcode-path: /Applications/Xcode_16.app
