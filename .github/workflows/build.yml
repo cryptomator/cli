@@ -34,3 +34,5 @@ jobs:
         with:
           name: cryptomator-cli-${{ steps.setversion.outputs.version }}.jar
           path: target/cryptomator-cli-*.jar
+      - name: Build app image and run integration tests
+        run: ./build_linux.sh

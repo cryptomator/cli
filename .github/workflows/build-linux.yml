@@ -98,6 +98,8 @@ jobs:
         run: |
           cp LICENSE.txt target/cryptomator-cli
           cp target/cryptomator-cli_completion.sh target/cryptomator-cli
+      - name: Run integration tests against the app image
+        run: ./mvnw -B verify -DskipITs=false
       - name: Zip binary for release
         run: |
           zip -r "./${ARTIFACT_NAME}" ./cryptomator-cli

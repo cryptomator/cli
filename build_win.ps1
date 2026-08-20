@@ -42,3 +42,10 @@ Write-Host "Creating app binary with jpackage..."
 if ( ($LASTEXITCODE -ne 0) -or (-not (Test-Path ./target/cryptomator-cli))) {
     throw "Binary creation with jpackage failed with exit code $LASTEXITCODE."
 }
+
+Write-Host "Running integration tests against the app image..."
+.\mvnw.cmd -B verify "-DskipITs=false"
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Integration tests failed with exit code $LASTEXITCODE."
+}

@@ -99,6 +99,8 @@ jobs:
       - name: Fix permissions
         run: attrib -r target/cryptomator-cli/cryptomator-cli.exe
         shell: pwsh
+      - name: Run integration tests against the app image
+        run: ./mvnw -B verify -DskipITs=false
       - name: Extract jars with DLLs for Codesigning
         if: inputs.sign || github.event_name == 'schedule'
         shell: pwsh

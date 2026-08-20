@@ -57,3 +57,11 @@ if [ $? -ne 0 ] || [ ! -d ./target/cryptomator-cli ]; then
     echo "Binary creation with jpackage failed."
     exit 1
 fi
+
+echo "Running integration tests against the app image..."
+./mvnw -B verify -DskipITs=false
+
+if [ $? -ne 0 ]; then
+    echo "Integration tests failed."
+    exit 1
+fi

@@ -113,6 +113,8 @@ jobs:
         working-directory: target
         env:
           PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+      - name: Run integration tests against the app image
+        run: ./mvnw -B verify -DskipITs=false
       - name: Install codesign certificate
         run: |
           # create variables

@@ -107,6 +107,16 @@ fusermount -u /path/to/former/mountpoint
 
 For other OSs, there is no cleanup necessary.
 
+## Integration Tests
+
+The integration tests run against the packaged app image, i.e. they test the actual binary and not just the Java code. Hence, you first need to build the app image with the build script for your OS (e.g. `build_win.ps1`) and afterwards run:
+
+```shell
+./mvnw verify -DskipITs=false
+```
+
+If the app image is not located in the default output directory `target`, you can specify the path to the binary with `-Dcli.executable=/path/to/cryptomator-cli`.
+
 ## License
 
 This project is dual-licensed under the AGPLv3 for FOSS projects as well as a commercial license derived from the LGPL for independent software vendors and resellers. If you want to use this library in applications, that are *not* licensed under the AGPL, feel free to contact our [support team](https://cryptomator.org/help/).
