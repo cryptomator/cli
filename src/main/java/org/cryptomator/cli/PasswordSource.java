@@ -39,8 +39,8 @@ public class PasswordSource {
     }
 
     void confirmPassphrase() throws IOException {
-        // Don't confirm the passphrase if stdin is piped.
-        if (passphraseStdin == null || System.console() == null) {
+        // Don't confirm the passphrase if stdin is piped. Since JDK 22, System.console() also returns a non-null object for piped stdin, hence the additional isTerminal() check.
+        if (passphraseStdin == null || System.console() == null || !System.console().isTerminal()) {
             return;
         }
         char[] confirmationInput = System.console().readPassword("Confirm passphrase: ");
