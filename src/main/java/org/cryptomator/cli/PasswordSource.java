@@ -78,8 +78,11 @@ public class PasswordSource {
             charWrapper = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(fileContent));
             //strips newline, since most files on linux end with a new line
             var length = charWrapper.limit();
-            if(charWrapper.get(length - 1) == '\n') {
+            if(length > 0 && charWrapper.get(length - 1) == '\n') {
                length--;
+            }
+            if (length == 0) {
+                throw new ReadingFileFailedException("Password file is empty.");
             }
             char[] content = new char[length];
             charWrapper.get(content);
