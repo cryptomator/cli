@@ -5,7 +5,7 @@ on:
     types: [published]
 
 permissions:
-  contents: write
+  contents: read # Releases are published with CRYPTOBOT_RELEASE_TOKEN, not GITHUB_TOKEN
 
 defaults:
   run:

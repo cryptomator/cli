@@ -41,7 +41,7 @@ on:
         default: '-SNAPSHOT'
 
 permissions:
-  contents: write
+  contents: read # Releases are published with CRYPTOBOT_RELEASE_TOKEN, not GITHUB_TOKEN
 
 env:
   JAVA_DIST: 'temurin'
