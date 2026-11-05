@@ -33,6 +33,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Check the git tag is signed
         run: git cat-file -p "${GITHUB_REF_NAME}" | grep "BEGIN SSH SIGNATURE"
       - name: Check the git tag is on release or main branch
@@ -82,7 +83,10 @@ jobs:
       semVerNum: ${{needs.get-version.outputs.semVerNum}}
       revisionNum: ${{needs.get-version.outputs.revNum}}
       semVerSuffix: ${{needs.get-version.outputs.semVerSuffix}}
-    secrets: inherit
+    secrets:
+      RELEASES_GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+      RELEASES_GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      CRYPTOBOT_RELEASE_TOKEN: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
 
   build-mac:
     needs: [get-version, create-release-draft]
@@ -91,7 +95,19 @@ jobs:
       semVerNum: ${{needs.get-version.outputs.semVerNum}}
       revisionNum: ${{needs.get-version.outputs.revNum}}
       semVerSuffix: ${{needs.get-version.outputs.semVerSuffix}}
-    secrets: inherit
+    secrets:
+      MACOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+      MACOS_CODESIGN_P12_BASE64: ${{ secrets.MACOS_CODESIGN_P12_BASE64 }}
+      MACOS_CODESIGN_P12_PW: ${{ secrets.MACOS_CODESIGN_P12_PW }}
+      MACOS_CODESIGN_TMP_KEYCHAIN_PW: ${{ secrets.MACOS_CODESIGN_TMP_KEYCHAIN_PW }}
+      MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+      MACOS_TEAM_IDENTIFIER: ${{ secrets.MACOS_TEAM_IDENTIFIER }}
+      MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+      MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+      MACOS_NOTARIZATION_PW: ${{ secrets.MACOS_NOTARIZATION_PW }}
+      RELEASES_GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+      RELEASES_GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      CRYPTOBOT_RELEASE_TOKEN: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
 
   build-win:
     needs: [get-version, create-release-draft]
@@ -100,7 +116,13 @@ jobs:
       semVerNum: ${{needs.get-version.outputs.semVerNum}}
       revisionNum: ${{needs.get-version.outputs.revNum}}
       semVerSuffix: ${{needs.get-version.outputs.semVerSuffix}}
-    secrets: inherit
+    secrets:
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      RELEASES_GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
+      RELEASES_GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
+      CRYPTOBOT_RELEASE_TOKEN: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
 
   update-sha256sums:
     runs-on: ubuntu-latest
@@ -110,6 +132,8 @@ jobs:
       GH_TOKEN: ${{ secrets.CRYPTOBOT_RELEASE_TOKEN }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
+        with:
+          persist-credentials: false
       - name: Update release body with checksums
         run: |
           CURRENT_BODY=$(gh release view "${GITHUB_REF_NAME}" --json body --jq .body)

@@ -28,6 +28,19 @@ on:
       sha256-win-zip-x64:
         description: "SHA256 sum of the x64 zip"
         value: ${{ jobs.build-binary.outputs.sha256sum}}
+    secrets:
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_CLIENT_SECRET:
+        required: false
+      RELEASES_GPG_PRIVATE_KEY:
+        required: true
+      RELEASES_GPG_PASSPHRASE:
+        required: true
+      CRYPTOBOT_RELEASE_TOKEN:
+        required: false
   workflow_dispatch:
     inputs:
       semVerNum:
@@ -68,6 +81,8 @@ jobs:
         ARTIFACT_NAME: cryptomator-cli-${{ inputs.semVerNum || '99.99.99' }}${{ inputs.semVerSuffix || '' }}-win-x64.zip
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #v4.3.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 #v4.8.0
         with:
           java-version: ${{ env.JAVA_VERSION }}

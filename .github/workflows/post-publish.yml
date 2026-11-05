@@ -19,11 +19,13 @@ jobs:
     steps:
       - name: Download source tarball
         run: |
-          curl -L -H "Accept: application/vnd.github+json" https://github.com/cryptomator/cli/archive/refs/tags/${{ github.event.release.tag_name }}.tar.gz --output ${{ env.ARCHIVE_NAME }}
+          curl -L -H "Accept: application/vnd.github+json" "https://github.com/cryptomator/cli/archive/refs/tags/${RELEASE_TAG}.tar.gz" --output "${ARCHIVE_NAME}"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
       - name: Sign source tarball with key 615D449FE6E6A235
         run: |
           echo "${GPG_PRIVATE_KEY}" | gpg --batch --quiet --import
-          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a ${{ env.ARCHIVE_NAME }}
+          echo "${GPG_PASSPHRASE}" | gpg --batch --quiet --passphrase-fd 0 --pinentry-mode loopback -u 615D449FE6E6A235 --detach-sign -a "${ARCHIVE_NAME}"
         env:
           GPG_PRIVATE_KEY: ${{ secrets.RELEASES_GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.RELEASES_GPG_PASSPHRASE }}
