@@ -23,7 +23,7 @@
 		<cryptofs.version>2.8.0</cryptofs.version>
 		<webdav-nio.version>2.0.10</webdav-nio.version>
 		<fuse-nio.version>5.0.5</fuse-nio.version>
-		<logback.version>1.5.25</logback.version>
+		<logback.version>1.5.34</logback.version>
 		<slf4j.version>2.0.17</slf4j.version>
 
 		<!-- build dependencies -->
